@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft Texture Generator</title>
+    <title>Magic Block</title>
     <link rel="stylesheet" href="styles.css">
     <!-- Include Three.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -26,33 +26,141 @@
         </div>
         
         <div class="main-content">
-="presets-container">
-                        <button class="preset-btn" data-preset="stone">Stone</button>
-                        <button class="preset-btn" data-preset="dirt">Dirt</button>
-                        <button class="preset-btn" data-preset="wood">Wood</button>
-                        <button class="preset-btn" data-preset="grass">Grass</button>
-                        <button class="preset-btn" data-preset="sand">Sand</button>
-                        <button class="preset-btn" data-preset="brick">Brick</button>
-                    </div>
-                </div>
-                
-                <div class="panel-section">
-                    <h3>Actions</h3>
+            <div class="controls-panel">
+                <div class="panel-section primary-actions">
                     <div class="action-buttons">
                         <button id="generate" class="primary-btn">Generate Texture</button>
                         <button id="randomize">Randomize</button>
-                        <button id="export-texture">Export Texture</button>
-                        <button id="rotation-toggle">Pause Rotation</button>
                     </div>
                 </div>
                 
                 <div class="panel-section">
-                    <h3>Texture Preview</h3>
-                    <canvas id="texture-preview" width="128" height="128"></canvas>
+                    <h3>Material Settings</h3>
+                    <div class="panel-content">
+                        <div class="control-group">
+                            <label for="material-type">Material Type:</label>
+                            <select id="material-type">
+                                <option value="stone">Stone</option>
+                                <option value="dirt">Dirt</option>
+                                <option value="wood">Wood</option>
+                                <option value="metal">Metal</option>
+                                <option value="brick">Brick</option>
+                                <option value="sand">Sand</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="pattern-type">Pattern Type:</label>
+                            <select id="pattern-type">
+                                <option value="noise">Noise</option>
+                                <option value="cracked">Cracked</option>
+                                <option value="checker">Checker</option>
+                                <option value="striped">Striped</option>
+                                <option value="zigzag">Zig-zag</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <h3>Color Settings</h3>
+                    <div class="panel-content">
+                        <div class="control-group">
+                            <label for="base-color">Base Color:</label>
+                            <div class="color-picker-container">
+                                <input type="color" id="base-color" value="#8c8c8c">
+                                <input type="text" id="base-color-hex" value="#8c8c8c">
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="accent-color">Accent Color:</label>
+                            <div class="color-picker-container">
+                                <input type="color" id="accent-color" value="#6e6e6e">
+                                <input type="text" id="accent-color-hex" value="#6e6e6e">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <h3>Texture Settings</h3>
+                    <div class="panel-content">
+                        <div class="control-group slider">
+                            <label for="noise-scale">Noise Scale:</label>
+                            <div class="slider-container">
+                                <input type="range" id="noise-scale" min="1" max="16" value="4">
+                                <input type="number" id="noise-scale-value" min="1" max="16" value="4">
+                            </div>
+                        </div>
+                        
+                        <div class="control-group slider">
+                            <label for="noise-strength">Noise Strength:</label>
+                            <div class="slider-container">
+                                <input type="range" id="noise-strength" min="0" max="100" value="30">
+                                <input type="number" id="noise-strength-value" min="0" max="100" value="30">
+                            </div>
+                        </div>
+                        
+                        <div class="control-group slider">
+                            <label for="edge-darkness">Edge Darkness:</label>
+                            <div class="slider-container">
+                                <input type="range" id="edge-darkness" min="0" max="100" value="40">
+                                <input type="number" id="edge-darkness-value" min="0" max="100" value="40">
+                            </div>
+                        </div>
+                        
+                        <div class="control-group slider">
+                            <label for="depth">Depth Effect:</label>
+                            <div class="slider-container">
+                                <input type="range" id="depth" min="0" max="100" value="30">
+                                <input type="number" id="depth-value" min="0" max="100" value="30">
+                            </div>
+                        </div>
+                        
+                        <div class="control-group slider">
+                            <label for="bevel">Bevel Effect:</label>
+                            <div class="slider-container">
+                                <input type="range" id="bevel" min="0" max="100" value="20">
+                                <input type="number" id="bevel-value" min="0" max="100" value="20">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <h3>Presets</h3>
+                    <div class="panel-content">
+                        <div class="presets-container">
+                            <button class="preset-btn" data-preset="stone">Stone</button>
+                            <button class="preset-btn" data-preset="dirt">Dirt</button>
+                            <button class="preset-btn" data-preset="wood">Wood</button>
+                            <button class="preset-btn" data-preset="grass">Grass</button>
+                            <button class="preset-btn" data-preset="sand">Sand</button>
+                            <button class="preset-btn" data-preset="brick">Brick</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <h3>Other Options</h3>
+                    <div class="panel-content">
+                        <div class="action-buttons">
+                            <button id="rotation-toggle">Pause Rotation</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <div id="canvas-container"></div>
+            <div id="canvas-container">
+                <div class="texture-preview-container">
+                    <h4>Texture Preview</h4>
+                    <canvas id="texture-preview" width="128" height="128"></canvas>
+                    <div class="action-buttons">
+                        <button id="export-texture">Export Texture</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
