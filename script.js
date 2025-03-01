@@ -81,14 +81,13 @@ function init() {
     
     // Set up scene
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x2c3e50);
     
     // Set up camera
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 3;
     
-    // Set up renderer
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    // Set up renderer with transparency
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth * 0.75, window.innerHeight);
     document.getElementById('canvas-container').appendChild(renderer.domElement);
     
