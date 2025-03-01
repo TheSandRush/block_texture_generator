@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLOCK Texture Generator v0.1</title>
+    <title>MAGIC BLOCKs</title>
     <link rel="stylesheet" href="styles.css">
     <!-- Include Three.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -12,13 +12,16 @@
 </head>
 <body>
     <div id="loading-screen">
-        <div class="spinner"></div>
-        <p>Loading Texture Generator...</p>
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h2>Minecraft Texture Generator</h2>
+            <p>Loading...</p>
+        </div>
     </div>
 
     <div class="container">
         <div class="header">
-            <h1>BLOCK Texture Generator v0.1</h1>
+            <h1>MAGIC BLOCKs</h1>
         </div>
         
         <div class="main-content">
@@ -55,14 +58,18 @@
                     
                     <div class="control-group">
                         <label for="base-color">Base Color:</label>
-                        <input type="color" id="base-color" value="#8c8c8c">
-                        <input type="text" id="base-color-hex" value="#8c8c8c">
+                        <div class="color-picker-container">
+                            <input type="color" id="base-color" value="#8c8c8c">
+                            <input type="text" id="base-color-hex" value="#8c8c8c">
+                        </div>
                     </div>
                     
                     <div class="control-group">
                         <label for="accent-color">Accent Color:</label>
-                        <input type="color" id="accent-color" value="#6e6e6e">
-                        <input type="text" id="accent-color-hex" value="#6e6e6e">
+                        <div class="color-picker-container">
+                            <input type="color" id="accent-color" value="#6e6e6e">
+                            <input type="text" id="accent-color-hex" value="#6e6e6e">
+                        </div>
                     </div>
                 </div>
                 
