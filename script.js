@@ -76,140 +76,203 @@ const presets = {
 };
 
 function init() {
-    // Initialize simplex noise
-    simplex = new SimplexNoise();
-    
-    // Set up scene
-    scene = new THREE.Scene();
-    
-    // Set up camera
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 3;
-    
-    // Set up renderer with transparency
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth * 0.75, window.innerHeight);
-    document.getElementById('canvas-container').appendChild(renderer.domElement);
-    
-    // Set up preview canvas
-    previewCanvas = document.getElementById('texture-preview');
-    previewCtx = previewCanvas.getContext('2d');
-    
-    // Create initial textures
-    createTextures();
-    
-    // Create cube
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const materials = [
-        new THREE.MeshBasicMaterial({ map: textures.right }),
-        new THREE.MeshBasicMaterial({ map: textures.left }),
-        new THREE.MeshBasicMaterial({ map: textures.top }),
-        new THREE.MeshBasicMaterial({ map: textures.bottom }),
-        new THREE.MeshBasicMaterial({ map: textures.front }),
-        new THREE.MeshBasicMaterial({ map: textures.back })
-    ];
-    
-    cube = new THREE.Mesh(geometry, materials);
-    scene.add(cube);
-    
-    // Event listeners
-    window.addEventListener('resize', onWindowResize);
-    document.getElementById('generate').addEventListener('click', updateTextures);
-    document.getElementById('randomize').addEventListener('click', randomizeSettings);
-    document.getElementById('export-texture').addEventListener('click', exportTexture);
-    document.getElementById('rotation-toggle').addEventListener('click', toggleRotation);
-    
-    // Add event listeners for all input controls
-    const inputs = document.querySelectorAll('input, select');
-    inputs.forEach(input => {
-        if (input.type === 'range') {
-            input.addEventListener('input', function() {
-                document.getElementById(this.id + '-value').value = this.value;
-            });
-            
-            const numberInput = document.getElementById(input.id + '-value');
-            if (numberInput) {
-                numberInput.addEventListener('input', function() {
-                    document.getElementById(input.id).value = this.value;
-                });
-            }
-        }
+    console.log("Initializing Magic Block...");
+    try {
+        // Initialize simplex noise
+        simplex = new SimplexNoise();
+        console.log("SimplexNoise initialized");
         
-        if (input.type === 'color') {
-            input.addEventListener('input', function() {
-                document.getElementById(this.id + '-hex').value = this.value;
-            });
+        // Set up scene
+        scene = new THREE.Scene();
+        // No background color - using transparent renderer
+        
+        // Set up camera
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 3;
+        
+        // Set up renderer with transparency
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        const canvasContainer = document.getElementById('canvas-container');
+        renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
+        canvasContainer.appendChild(renderer.domElement);
+        console.log("Renderer initialized");
+        
+        // Set up preview canvas
+        previewCanvas = document.getElementById('texture-preview');
+        if (!previewCanvas) {
+            console.error("Preview canvas element not found!");
+            return; // Exit initialization if element is missing
+        }
+        previewCtx = previewCanvas.getContext('2d');
+        console.log("Preview canvas initialized");
+        
+        // Create initial textures
+        createTextures();
+        
+        // Create cube
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const materials = [
+            new THREE.MeshBasicMaterial({ map: textures.right }),
+            new THREE.MeshBasicMaterial({ map: textures.left }),
+            new THREE.MeshBasicMaterial({ map: textures.top }),
+            new THREE.MeshBasicMaterial({ map: textures.bottom }),
+            new THREE.MeshBasicMaterial({ map: textures.front }),
+            new THREE.MeshBasicMaterial({ map: textures.back })
+        ];
+        
+        cube = new THREE.Mesh(geometry, materials);
+        scene.add(cube);
+        console.log("Cube created and added to scene");
+        
+        // Event listeners
+        window.addEventListener('resize', onWindowResize);
+        
+        // Check if elements exist before adding event listeners
+        const generateBtn = document.getElementById('generate');
+        const randomizeBtn = document.getElementById('randomize');
+        const exportBtn = document.getElementById('export-texture');
+        const rotationToggleBtn = document.getElementById('rotation-toggle');
+        
+        if (generateBtn) generateBtn.addEventListener('click', updateTextures);
+        if (randomizeBtn) randomizeBtn.addEventListener('click', randomizeSettings);
+        if (exportBtn) exportBtn.addEventListener('click', exportTexture);
+        if (rotationToggleBtn) rotationToggleBtn.addEventListener('click', toggleRotation);
+        console.log("Button event listeners initialized");
+        
+        // Add event listeners for all input controls
+        const inputs = document.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.type === 'range') {
+                input.addEventListener('input', function() {
+                    const valueInput = document.getElementById(this.id + '-value');
+                    if (valueInput) {
+                        valueInput.value = this.value;
+                    }
+                });
+                
+                const numberInput = document.getElementById(input.id + '-value');
+                if (numberInput) {
+                    numberInput.addEventListener('input', function() {
+                        const rangeInput = document.getElementById(input.id);
+                        if (rangeInput) {
+                            rangeInput.value = this.value;
+                        }
+                    });
+                }
+            }
             
-            const hexInput = document.getElementById(input.id + '-hex');
-            if (hexInput) {
-                hexInput.addEventListener('input', function() {
-                    if (/^#[0-9A-F]{6}$/i.test(this.value)) {
-                        document.getElementById(input.id.replace('-hex', '')).value = this.value;
+            if (input.type === 'color') {
+                input.addEventListener('input', function() {
+                    const hexInput = document.getElementById(this.id + '-hex');
+                    if (hexInput) {
+                        hexInput.value = this.value;
+                    }
+                });
+                
+                const hexInput = document.getElementById(input.id + '-hex');
+                if (hexInput) {
+                    hexInput.addEventListener('input', function() {
+                        if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+                            const colorInput = document.getElementById(input.id.replace('-hex', ''));
+                            if (colorInput) {
+                                colorInput.value = this.value;
+                            }
+                        }
+                    });
+                }
+            }
+        });
+        console.log("Input control event listeners initialized");
+        
+        // Preset buttons
+        const presetButtons = document.querySelectorAll('.preset-btn');
+        presetButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                applyPreset(this.dataset.preset);
+            });
+        });
+        
+        // Modal setup
+        const modal = document.getElementById('export-modal');
+        if (modal) {
+            const closeBtns = document.getElementsByClassName('close');
+            const downloadBtn = document.getElementById('download-button');
+            
+            if (closeBtns.length > 0) {
+                closeBtns[0].onclick = function() {
+                    modal.style.display = 'none';
+                };
+            }
+            
+            window.onclick = function(event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            };
+            
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', function() {
+                    const link = document.createElement('a');
+                    link.download = 'magic-block-texture.png';
+                    const downloadImg = document.getElementById('download-image');
+                    if (downloadImg) {
+                        link.href = downloadImg.src;
+                        link.click();
                     }
                 });
             }
         }
-    });
-    
-    // Preset buttons
-    const presetButtons = document.querySelectorAll('.preset-btn');
-    presetButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            applyPreset(this.dataset.preset);
-        });
-    });
-    
-    // Modal setup
-    const modal = document.getElementById('export-modal');
-    const closeBtn = document.getElementsByClassName('close')[0];
-    const downloadBtn = document.getElementById('download-button');
-    
-    closeBtn.onclick = function() {
-        modal.style.display = 'none';
-    };
-    
-    window.onclick = function(event) {
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
-    };
-    
-    downloadBtn.addEventListener('click', function() {
-        const link = document.createElement('a');
-        link.download = 'minecraft-texture.png';
-        link.href = document.getElementById('download-image').src;
-        link.click();
-    });
-    
-    // Start animation
-    animate();
-    
-    // Hide loading screen
-    setTimeout(() => {
-        document.getElementById('loading-screen').style.display = 'none';
-    }, 1000);
+        console.log("Modal setup complete");
+        
+        // Start animation
+        animate();
+        console.log("Animation started");
+        
+        // Hide loading screen
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.style.display = 'none';
+                console.log("Loading screen hidden");
+            }
+        }, 1500); // Increased timeout to ensure everything is ready
+    } catch (error) {
+        console.error("Initialization error:", error);
+        alert("There was an error initializing Magic Block. Please check the console for details.");
+    }
 }
 
 function toggleRotation() {
     isRotating = !isRotating;
-    document.getElementById('rotation-toggle').textContent = isRotating ? 'Pause Rotation' : 'Resume Rotation';
+    const rotationToggleBtn = document.getElementById('rotation-toggle');
+    if (rotationToggleBtn) {
+        rotationToggleBtn.textContent = isRotating ? 'Pause Rotation' : 'Resume Rotation';
+    }
 }
 
 function onWindowResize() {
-    camera.aspect = (window.innerWidth * 0.75) / window.innerHeight;
+    const canvasContainer = document.getElementById('canvas-container');
+    if (!canvasContainer) return;
+    
+    const containerWidth = canvasContainer.clientWidth;
+    const containerHeight = canvasContainer.clientHeight;
+    
+    camera.aspect = containerWidth / containerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth * 0.75, window.innerHeight);
+    renderer.setSize(containerWidth, containerHeight);
 }
 
 function animate() {
     requestAnimationFrame(animate);
     
-    if (isRotating) {
+    if (isRotating && cube) {
         cube.rotation.x += 0.005;
         cube.rotation.y += 0.01;
     }
     
-    renderer.render(scene, camera);
+    if (renderer && scene && camera) {
+        renderer.render(scene, camera);
+    }
 }
 
 function createTextures() {
@@ -241,8 +304,10 @@ function updateTextures() {
         
         generateTextureForFace(canvas, face);
         
-        textures[face].image = canvas;
-        textures[face].needsUpdate = true;
+        if (textures[face]) {
+            textures[face].image = canvas;
+            textures[face].needsUpdate = true;
+        }
     });
     
     // Also update the preview texture
@@ -251,15 +316,28 @@ function updateTextures() {
 
 function generateTextureForFace(canvas, face) {
     const ctx = canvas.getContext('2d');
-    const materialType = document.getElementById('material-type').value;
-    const baseColor = document.getElementById('base-color').value;
-    const accentColor = document.getElementById('accent-color').value;
-    const noiseScale = parseInt(document.getElementById('noise-scale').value);
-    const noiseStrength = parseInt(document.getElementById('noise-strength').value) / 100;
-    const patternType = document.getElementById('pattern-type').value;
-    const edgeDarkness = parseInt(document.getElementById('edge-darkness').value) / 100;
-    const depth = parseInt(document.getElementById('depth').value) / 100;
-    const bevel = parseInt(document.getElementById('bevel').value) / 100;
+    
+    // Get form values with null checks
+    const materialTypeElement = document.getElementById('material-type');
+    const baseColorElement = document.getElementById('base-color');
+    const accentColorElement = document.getElementById('accent-color');
+    const noiseScaleElement = document.getElementById('noise-scale');
+    const noiseStrengthElement = document.getElementById('noise-strength');
+    const patternTypeElement = document.getElementById('pattern-type');
+    const edgeDarknessElement = document.getElementById('edge-darkness');
+    const depthElement = document.getElementById('depth');
+    const bevelElement = document.getElementById('bevel');
+    
+    // Set defaults if elements not found
+    const materialType = materialTypeElement ? materialTypeElement.value : 'stone';
+    const baseColor = baseColorElement ? baseColorElement.value : '#8c8c8c';
+    const accentColor = accentColorElement ? accentColorElement.value : '#6e6e6e';
+    const noiseScale = noiseScaleElement ? parseInt(noiseScaleElement.value) : 4;
+    const noiseStrength = noiseStrengthElement ? parseInt(noiseStrengthElement.value) / 100 : 0.3;
+    const patternType = patternTypeElement ? patternTypeElement.value : 'noise';
+    const edgeDarkness = edgeDarknessElement ? parseInt(edgeDarknessElement.value) / 100 : 0.4;
+    const depth = depthElement ? parseInt(depthElement.value) / 100 : 0.3;
+    const bevel = bevelElement ? parseInt(bevelElement.value) / 100 : 0.2;
     
     // Convert hex colors to RGB
     const baseRGB = hexToRgb(baseColor);
@@ -378,12 +456,21 @@ function generateTextureForFace(canvas, face) {
 }
 
 function updatePreviewTexture() {
+    if (!previewCtx) {
+        console.error("Preview context not available");
+        return;
+    }
+    
     // Create a larger preview texture
     const previewSize = 128;
     const scale = previewSize / textureSize;
     
     // Get the front face texture
-    const frontCanvas = textures.front.image;
+    const frontCanvas = textures.front ? textures.front.image : null;
+    if (!frontCanvas) {
+        console.error("Front texture not available");
+        return;
+    }
     
     // Clear preview
     previewCtx.clearRect(0, 0, previewSize, previewSize);
@@ -417,58 +504,88 @@ function exportTexture() {
         { face: 'left', x: 0, y: textureSize },
         { face: 'front', x: textureSize, y: textureSize },
         { face: 'right', x: textureSize * 2, y: textureSize },
-        { face: 'back', x: 0, y: 0 }, // Fixed position
-        { face: 'bottom', x: textureSize * 2, y: 0 } // Fixed position
+        { face: 'back', x: 0, y: 0 },
+        { face: 'bottom', x: textureSize * 2, y: 0 }
     ];
     
     // Draw each face at its position
     arrangement.forEach(({face, x, y}) => {
-        if (x < exportCanvas.width && y < exportCanvas.height) {
+        if (x < exportCanvas.width && y < exportCanvas.height && textures[face] && textures[face].image) {
             exportCtx.drawImage(textures[face].image, x, y);
         }
     });
     
     // Create a larger preview image
     const downloadImg = document.getElementById('download-image');
-    downloadImg.src = exportCanvas.toDataURL('image/png');
+    if (downloadImg) {
+        downloadImg.src = exportCanvas.toDataURL('image/png');
+    }
     
     // Show the modal
-    document.getElementById('export-modal').style.display = 'block';
+    const modal = document.getElementById('export-modal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
 }
 
 function randomizeSettings() {
+    // Get all form elements for randomization
+    const materialTypeElement = document.getElementById('material-type');
+    const patternTypeElement = document.getElementById('pattern-type');
+    const baseColorElement = document.getElementById('base-color');
+    const baseColorHexElement = document.getElementById('base-color-hex');
+    const accentColorElement = document.getElementById('accent-color');
+    const accentColorHexElement = document.getElementById('accent-color-hex');
+    const noiseScaleElement = document.getElementById('noise-scale');
+    const noiseScaleValueElement = document.getElementById('noise-scale-value');
+    const noiseStrengthElement = document.getElementById('noise-strength');
+    const noiseStrengthValueElement = document.getElementById('noise-strength-value');
+    const edgeDarknessElement = document.getElementById('edge-darkness');
+    const edgeDarknessValueElement = document.getElementById('edge-darkness-value');
+    const depthElement = document.getElementById('depth');
+    const depthValueElement = document.getElementById('depth-value');
+    const bevelElement = document.getElementById('bevel');
+    const bevelValueElement = document.getElementById('bevel-value');
+    
     // Randomize material type
     const materialTypes = ['stone', 'dirt', 'wood', 'metal', 'brick', 'sand'];
     const randomMaterial = materialTypes[Math.floor(Math.random() * materialTypes.length)];
-    document.getElementById('material-type').value = randomMaterial;
+    if (materialTypeElement) materialTypeElement.value = randomMaterial;
     
     // Randomize pattern type
     const patternTypes = ['noise', 'cracked', 'checker', 'striped', 'zigzag'];
     const randomPattern = patternTypes[Math.floor(Math.random() * patternTypes.length)];
-    document.getElementById('pattern-type').value = randomPattern;
+    if (patternTypeElement) patternTypeElement.value = randomPattern;
     
     // Randomize colors
-    document.getElementById('base-color').value = randomColor();
-    document.getElementById('base-color-hex').value = document.getElementById('base-color').value;
+    const randomBaseColor = randomColor();
+    if (baseColorElement) baseColorElement.value = randomBaseColor;
+    if (baseColorHexElement) baseColorHexElement.value = randomBaseColor;
     
-    document.getElementById('accent-color').value = randomColor();
-    document.getElementById('accent-color-hex').value = document.getElementById('accent-color').value;
+    const randomAccentColor = randomColor();
+    if (accentColorElement) accentColorElement.value = randomAccentColor;
+    if (accentColorHexElement) accentColorHexElement.value = randomAccentColor;
     
     // Randomize sliders
-    document.getElementById('noise-scale').value = Math.floor(Math.random() * 16) + 1;
-    document.getElementById('noise-scale-value').value = document.getElementById('noise-scale').value;
+    const randomNoiseScale = Math.floor(Math.random() * 16) + 1;
+    if (noiseScaleElement) noiseScaleElement.value = randomNoiseScale;
+    if (noiseScaleValueElement) noiseScaleValueElement.value = randomNoiseScale;
     
-    document.getElementById('noise-strength').value = Math.floor(Math.random() * 100) + 1;
-    document.getElementById('noise-strength-value').value = document.getElementById('noise-strength').value;
+    const randomNoiseStrength = Math.floor(Math.random() * 100) + 1;
+    if (noiseStrengthElement) noiseStrengthElement.value = randomNoiseStrength;
+    if (noiseStrengthValueElement) noiseStrengthValueElement.value = randomNoiseStrength;
     
-    document.getElementById('edge-darkness').value = Math.floor(Math.random() * 100) + 1;
-    document.getElementById('edge-darkness-value').value = document.getElementById('edge-darkness').value;
+    const randomEdgeDarkness = Math.floor(Math.random() * 100) + 1;
+    if (edgeDarknessElement) edgeDarknessElement.value = randomEdgeDarkness;
+    if (edgeDarknessValueElement) edgeDarknessValueElement.value = randomEdgeDarkness;
     
-    document.getElementById('depth').value = Math.floor(Math.random() * 100) + 1;
-    document.getElementById('depth-value').value = document.getElementById('depth').value;
+    const randomDepth = Math.floor(Math.random() * 100) + 1;
+    if (depthElement) depthElement.value = randomDepth;
+    if (depthValueElement) depthValueElement.value = randomDepth;
     
-    document.getElementById('bevel').value = Math.floor(Math.random() * 100) + 1;
-    document.getElementById('bevel-value').value = document.getElementById('bevel').value;
+    const randomBevel = Math.floor(Math.random() * 100) + 1;
+    if (bevelElement) bevelElement.value = randomBevel;
+    if (bevelValueElement) bevelValueElement.value = randomBevel;
     
     // Update textures
     updateTextures();
@@ -478,23 +595,42 @@ function applyPreset(presetName) {
     const preset = presets[presetName];
     if (!preset) return;
     
-    document.getElementById('material-type').value = preset.materialType;
-    document.getElementById('base-color').value = preset.baseColor;
-    document.getElementById('base-color-hex').value = preset.baseColor;
-    document.getElementById('accent-color').value = preset.accentColor;
-    document.getElementById('accent-color-hex').value = preset.accentColor;
-    document.getElementById('noise-scale').value = preset.noiseScale;
-    document.getElementById('noise-scale-value').value = preset.noiseScale;
-    document.getElementById('noise-strength').value = preset.noiseStrength;
-    document.getElementById('noise-strength-value').value = preset.noiseStrength;
-    document.getElementById('pattern-type').value = preset.patternType;
-    document.getElementById('edge-darkness').value = preset.edgeDarkness;
-    document.getElementById('edge-darkness-value').value = preset.edgeDarkness;
-    document.getElementById('depth').value = preset.depth;
-    document.getElementById('depth-value').value = preset.depth;
-    document.getElementById('bevel').value = preset.bevel;
-    document.getElementById('bevel-value').value = preset.bevel;
+    // Apply preset values to form elements
+    const materialTypeElement = document.getElementById('material-type');
+    const baseColorElement = document.getElementById('base-color');
+    const baseColorHexElement = document.getElementById('base-color-hex');
+    const accentColorElement = document.getElementById('accent-color');
+    const accentColorHexElement = document.getElementById('accent-color-hex');
+    const noiseScaleElement = document.getElementById('noise-scale');
+    const noiseScaleValueElement = document.getElementById('noise-scale-value');
+    const noiseStrengthElement = document.getElementById('noise-strength');
+    const noiseStrengthValueElement = document.getElementById('noise-strength-value');
+    const patternTypeElement = document.getElementById('pattern-type');
+    const edgeDarknessElement = document.getElementById('edge-darkness');
+    const edgeDarknessValueElement = document.getElementById('edge-darkness-value');
+    const depthElement = document.getElementById('depth');
+    const depthValueElement = document.getElementById('depth-value');
+    const bevelElement = document.getElementById('bevel');
+    const bevelValueElement = document.getElementById('bevel-value');
     
+    if (materialTypeElement) materialTypeElement.value = preset.materialType;
+    if (baseColorElement) baseColorElement.value = preset.baseColor;
+    if (baseColorHexElement) baseColorHexElement.value = preset.baseColor;
+    if (accentColorElement) accentColorElement.value = preset.accentColor;
+    if (accentColorHexElement) accentColorHexElement.value = preset.accentColor;
+    if (noiseScaleElement) noiseScaleElement.value = preset.noiseScale;
+    if (noiseScaleValueElement) noiseScaleValueElement.value = preset.noiseScale;
+    if (noiseStrengthElement) noiseStrengthElement.value = preset.noiseStrength;
+    if (noiseStrengthValueElement) noiseStrengthValueElement.value = preset.noiseStrength;
+    if (patternTypeElement) patternTypeElement.value = preset.patternType;
+    if (edgeDarknessElement) edgeDarknessElement.value = preset.edgeDarkness;
+    if (edgeDarknessValueElement) edgeDarknessValueElement.value = preset.edgeDarkness;
+    if (depthElement) depthElement.value = preset.depth;
+    if (depthValueElement) depthValueElement.value = preset.depth;
+    if (bevelElement) bevelElement.value = preset.bevel;
+    if (bevelValueElement) bevelValueElement.value = preset.bevel;
+    
+    // Update textures
     updateTextures();
 }
 
