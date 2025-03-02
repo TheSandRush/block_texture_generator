@@ -253,18 +253,5 @@
 <script src="vxb-converter-setup.js"></script>
 <script src="script.js"></script>
 
-        // Add section collapsing functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const sections = document.querySelectorAll('.panel-section:not(.primary-actions)');
-            
-            sections.forEach(section => {
-                const heading = section.querySelector('h3');
-                
-                heading.addEventListener('click', () => {
-                    section.classList.toggle('collapsed');
-                });
-            });
-        });
-    </script>
 </body>
 </html>

@@ -539,6 +539,9 @@ function init() {
                 }
             });
         }
+
+        // Initialize panel collapse functionality
+        initPanelCollapse();
     } catch (error) {
         console.error("Initialization error:", error);
         alert("There was an error initializing Magic Block. Please check the console for details.");
@@ -1156,6 +1159,41 @@ function updateCubeFace(face, textureCanvas) {
         textures[face].image = textureCanvas;
         textures[face].needsUpdate = true;
     }
+}
+
+function initPanelCollapse() {
+    const sections = document.querySelectorAll('.panel-section:not(.primary-actions)');
+    
+    sections.forEach(section => {
+        const heading = section.querySelector('h3');
+        const content = section.querySelector('.panel-content');
+        
+        if (heading && content) {
+            // Add aria attributes for accessibility
+            heading.setAttribute('role', 'button');
+            heading.setAttribute('aria-expanded', 'true');
+            heading.setAttribute('aria-controls', `panel-${section.id || Math.random().toString(36).substr(2, 9)}`);
+            content.setAttribute('id', heading.getAttribute('aria-controls'));
+            
+            // Add click handler
+            heading.addEventListener('click', () => {
+                const isCollapsed = section.classList.toggle('collapsed');
+                heading.setAttribute('aria-expanded', !isCollapsed);
+                
+                // Save panel state to localStorage
+                const panelId = heading.getAttribute('aria-controls');
+                localStorage.setItem(`panel-${panelId}-collapsed`, isCollapsed);
+            });
+            
+            // Restore panel state from localStorage
+            const panelId = heading.getAttribute('aria-controls');
+            const isCollapsed = localStorage.getItem(`panel-${panelId}-collapsed`) === 'true';
+            if (isCollapsed) {
+                section.classList.add('collapsed');
+                heading.setAttribute('aria-expanded', 'false');
+            }
+        }
+    });
 }
 
 // Initialize the application when the page loads
