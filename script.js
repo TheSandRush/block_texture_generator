@@ -88,15 +88,19 @@ function init() {
         
         // Set up camera
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 2.5; // Closer camera position (was 3) for a larger block view
+        camera.position.z = 2.5; // Desktop default
 
-        
         // Set up renderer with transparency
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         const canvasContainer = document.getElementById('canvas-container');
-        renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
+        // Calculate initial size based on container, not window
+        const containerWidth = canvasContainer.clientWidth;
+        const containerHeight = canvasContainer.clientHeight;
+        renderer.setSize(containerWidth, containerHeight);
         canvasContainer.appendChild(renderer.domElement);
-        console.log("Renderer initialized");
+
+        window.addEventListener('orientationchange', handleOrientationChange);
+        window.addEventListener('resize', onWindowResize);
         
         // Set up preview canvas
         previewCanvas = document.getElementById('texture-preview');
@@ -205,24 +209,33 @@ function init() {
                 };
             }
     // Trigger resize handler once to set proper dimensions
-onWindowResize();
-        
-            window.onclick = function(event) {
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                }
-            };
-            
-            if (downloadBtn) {
-                downloadBtn.addEventListener('click', function() {
-                    const link = document.createElement('a');
-                    link.download = 'magic-block-texture.png';
-                    const downloadImg = document.getElementById('download-image');
-                    if (downloadImg) {
-                        link.href = downloadImg.src;
-                        link.click();
-                    }
-                });
+function onWindowResize() {
+    const canvasContainer = document.getElementById('canvas-container');
+    if (!canvasContainer) return;
+    
+    const containerWidth = canvasContainer.clientWidth;
+    const containerHeight = canvasContainer.clientHeight;
+    
+    // Update camera aspect ratio based on container dimensions
+    camera.aspect = containerWidth / containerHeight;
+    camera.updateProjectionMatrix();
+    
+    // Update renderer size
+    renderer.setSize(containerWidth, containerHeight);
+    
+    // Adjust camera position based on screen size
+    if (window.innerWidth <= 480) {
+        // Small mobile devices
+        camera.position.z = 2.0;
+    } else if (window.innerWidth <= 768) {
+        // Medium mobile devices
+        camera.position.z = 2.2;
+    } else {
+        // Desktops and larger devices
+        camera.position.z = 2.5;
+    }
+}
+);
             }
         }
         console.log("Modal setup complete");
