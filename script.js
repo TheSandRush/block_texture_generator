@@ -73,7 +73,6 @@ const presets = {
         depth: 30,            // reduced from 60
         bevel: 20             // reduced from 30
     }
-}
 };
 
 function init() {
