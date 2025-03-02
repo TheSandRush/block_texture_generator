@@ -124,11 +124,19 @@
                             <p class="help-text">Use x and y variables in your formula. Result should be between -1 and 1.</p>
                         </div>
                         
-                        <div class="control-group slider">
+                        <div class="control-group slider" id="math-scale-container">
                             <label for="math-scale">Scale:</label>
                             <div class="slider-container">
                                 <input type="range" id="math-scale" min="1" max="50" value="10">
                                 <input type="number" id="math-scale-value" min="1" max="50" value="10">
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="formula-color">Formula Shading Color:</label>
+                            <div class="color-picker-container">
+                                <input type="color" id="formula-color" value="#4a90e2">
+                                <input type="text" id="formula-color-hex" value="#4a90e2">
                             </div>
                         </div>
                         

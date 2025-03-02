@@ -787,14 +787,17 @@ function generateTextureForFace(canvas, face, useSharedPalette = true) {
     const mathPatternTypeElement = document.getElementById('math-pattern-type');
     const mathScaleElement = document.getElementById('math-scale');
     const mathFormulaElement = document.getElementById('math-formula');
+    const formulaColorElement = document.getElementById('formula-color');
     
     const mathPatternType = mathPatternTypeElement ? mathPatternTypeElement.value : 'sine-waves';
     const mathScale = mathScaleElement ? parseInt(mathScaleElement.value) : 10;
     const customFormula = mathFormulaElement ? mathFormulaElement.value.trim() : '';
+    const formulaColor = formulaColorElement ? formulaColorElement.value : '#4a90e2';
     
     // Convert hex colors to RGB
     const baseRGB = hexToRgb(baseColor);
     const accentRGB = hexToRgb(accentColor);
+    const formulaRGB = hexToRgb(formulaColor);
     
     // Fill with base color
     ctx.fillStyle = baseColor;
@@ -892,9 +895,18 @@ function generateTextureForFace(canvas, face, useSharedPalette = true) {
             const depthFactor = 1 - depth * (1 - noiseValue);
             
             // Calculate final pixel color
-            let r = Math.floor(baseRGB.r * (1 - noiseStrength) + accentRGB.r * noiseStrength * noiseValue);
-            let g = Math.floor(baseRGB.g * (1 - noiseStrength) + accentRGB.g * noiseStrength * noiseValue);
-            let b = Math.floor(baseRGB.b * (1 - noiseStrength) + accentRGB.b * noiseStrength * noiseValue);
+            let r, g, b;
+            
+            if (patternType === 'math' && customFormula) {
+                // Use formula color for custom formula
+                r = Math.floor(baseRGB.r * (1 - noiseStrength) + formulaRGB.r * noiseStrength * noiseValue);
+                g = Math.floor(baseRGB.g * (1 - noiseStrength) + formulaRGB.g * noiseStrength * noiseValue);
+                b = Math.floor(baseRGB.b * (1 - noiseStrength) + formulaRGB.b * noiseStrength * noiseValue);
+            } else {
+                r = Math.floor(baseRGB.r * (1 - noiseStrength) + accentRGB.r * noiseStrength * noiseValue);
+                g = Math.floor(baseRGB.g * (1 - noiseStrength) + accentRGB.g * noiseStrength * noiseValue);
+                b = Math.floor(baseRGB.b * (1 - noiseStrength) + accentRGB.b * noiseStrength * noiseValue);
+            }
             
             // Apply edge darkness and depth
             r = Math.floor(r * (1 - edgeDarkness + edgeDarkness * edgeFactor) * depthFactor);
@@ -1347,6 +1359,9 @@ function initMathControls() {
     const mathScaleValue = document.getElementById('math-scale-value');
     const mathFormula = document.getElementById('math-formula');
     const mathPresetButtons = document.querySelectorAll('.math-preset-btn');
+    const mathScaleContainer = document.getElementById('math-scale-container');
+    const formulaColorInput = document.getElementById('formula-color');
+    const formulaColorHex = document.getElementById('formula-color-hex');
     
     // Show/hide math controls based on pattern type
     patternTypeSelect.addEventListener('change', function() {
@@ -1374,10 +1389,33 @@ function initMathControls() {
     mathFormula.addEventListener('input', () => {
         if (mathFormula.value.trim()) {
             mathPatternSelect.disabled = true;
+            // Hide scale container when using custom formula
+            mathScaleContainer.style.display = 'none';
         } else {
             mathPatternSelect.disabled = false;
+            // Show scale container when not using custom formula
+            mathScaleContainer.style.display = 'block';
         }
         updateTextures();
+    });
+    
+    // Initialize scale container visibility based on formula content
+    if (mathFormula.value.trim()) {
+        mathScaleContainer.style.display = 'none';
+    }
+    
+    // Formula color event listeners
+    formulaColorInput.addEventListener('input', () => {
+        formulaColorHex.value = formulaColorInput.value;
+        updateTextures();
+    });
+    
+    formulaColorHex.addEventListener('input', () => {
+        // Validate hex color format
+        if (/^#[0-9A-F]{6}$/i.test(formulaColorHex.value)) {
+            formulaColorInput.value = formulaColorHex.value;
+            updateTextures();
+        }
     });
     
     // Math preset buttons
@@ -1387,6 +1425,8 @@ function initMathControls() {
             mathPatternSelect.value = preset;
             mathFormula.value = '';
             mathPatternSelect.disabled = false;
+            // Show scale container when using preset
+            mathScaleContainer.style.display = 'block';
             updateTextures();
             
             // Update active state
