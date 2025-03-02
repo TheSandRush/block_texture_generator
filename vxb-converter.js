@@ -1,3 +1,6 @@
+// vxb-converter.js - modified version without export statements
+// Change all instances of "export function" to just "function"
+
 /**
  * imageToVxb.js - Utility for converting images to a VXB file
  * 
@@ -177,7 +180,7 @@ function convertImagesToVxb(imagesData) {
  * @param {Array<File|Blob>} imageFiles - Array of 6 image files in order: right, back, bottom, top, front, left
  * @returns {Promise<ArrayBuffer>} - The VXB file as an ArrayBuffer
  */
-export async function imageFilesToVxb(imageFiles) {
+function imageFilesToVxb(imageFiles) {
   if (imageFiles.length !== 6) {
     throw new Error('Must provide exactly 6 image files for the cube faces');
   }
@@ -214,12 +217,10 @@ export async function imageFilesToVxb(imageFiles) {
     });
   });
   
-  try {
-    const imagesData = await Promise.all(imagesDataPromises);
-    return convertImagesToVxb(imagesData);
-  } catch (error) {
-    throw error;
-  }
+  return Promise.all(imagesDataPromises)
+    .then(imagesData => {
+      return convertImagesToVxb(imagesData);
+    });
 }
 
 /**
@@ -228,7 +229,7 @@ export async function imageFilesToVxb(imageFiles) {
  * @param {Array<string>} imageUrls - Array of 6 image URLs in order: right, back, bottom, top, front, left
  * @returns {Promise<ArrayBuffer>} - The VXB file as an ArrayBuffer
  */
-export async function imageUrlsToVxb(imageUrls) {
+function imageUrlsToVxb(imageUrls) {
   if (imageUrls.length !== 6) {
     throw new Error('Must provide exactly 6 image URLs for the cube faces');
   }
@@ -262,12 +263,10 @@ export async function imageUrlsToVxb(imageUrls) {
     });
   });
   
-  try {
-    const imagesData = await Promise.all(imagesDataPromises);
-    return convertImagesToVxb(imagesData);
-  } catch (error) {
-    throw error;
-  }
+  return Promise.all(imagesDataPromises)
+    .then(imagesData => {
+      return convertImagesToVxb(imagesData);
+    });
 }
 
 /**
@@ -276,7 +275,7 @@ export async function imageUrlsToVxb(imageUrls) {
  * @param {ArrayBuffer} vxbBuffer - The VXB file as an ArrayBuffer
  * @param {string} fileName - The name to use for the downloaded file (without extension)
  */
-export function saveVxbFile(vxbBuffer, fileName) {
+function saveVxbFile(vxbBuffer, fileName) {
   const blob = new Blob([vxbBuffer], { type: 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
   
@@ -301,7 +300,7 @@ export function saveVxbFile(vxbBuffer, fileName) {
  * @param {File|Blob} imageFile - The image file to convert
  * @returns {Promise<ArrayBuffer>} - The VXB file as an ArrayBuffer
  */
-export async function singleImageToVxb(imageFile) {
+function singleImageToVxb(imageFile) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -347,15 +346,12 @@ export async function singleImageToVxb(imageFile) {
  * @param {string} fileName - The name to use for the downloaded file (without extension)
  * @returns {Promise<ArrayBuffer>} - The VXB file buffer that was created
  */
-export async function convertAndSaveMultipleVxb(imageFiles, fileName) {
-  try {
-    const vxbBuffer = await imageFilesToVxb(imageFiles);
-    saveVxbFile(vxbBuffer, fileName);
-    return vxbBuffer;
-  } catch (error) {
-    console.error('Error converting images to VXB:', error);
-    throw error;
-  }
+function convertAndSaveMultipleVxb(imageFiles, fileName) {
+  return imageFilesToVxb(imageFiles)
+    .then(vxbBuffer => {
+      saveVxbFile(vxbBuffer, fileName);
+      return vxbBuffer;
+    });
 }
 
 /**
@@ -365,13 +361,21 @@ export async function convertAndSaveMultipleVxb(imageFiles, fileName) {
  * @param {string} fileName - The name to use for the downloaded file (without extension)
  * @returns {Promise<ArrayBuffer>} - The VXB file buffer that was created
  */
-export async function convertAndSaveSingleVxb(imageFile, fileName) {
-  try {
-    const vxbBuffer = await singleImageToVxb(imageFile);
-    saveVxbFile(vxbBuffer, fileName);
-    return vxbBuffer;
-  } catch (error) {
-    console.error('Error converting image to VXB:', error);
-    throw error;
-  }
+function convertAndSaveSingleVxb(imageFile, fileName) {
+  return singleImageToVxb(imageFile)
+    .then(vxbBuffer => {
+      saveVxbFile(vxbBuffer, fileName);
+      return vxbBuffer;
+    });
 }
+
+// Add to window object so functions are globally accessible
+window.VxbConverter = {
+  convertImagesToVxb: convertImagesToVxb,
+  imageFilesToVxb: imageFilesToVxb,
+  imageUrlsToVxb: imageUrlsToVxb,
+  saveVxbFile: saveVxbFile,
+  singleImageToVxb: singleImageToVxb,
+  convertAndSaveMultipleVxb: convertAndSaveMultipleVxb,
+  convertAndSaveSingleVxb: convertAndSaveSingleVxb
+};
