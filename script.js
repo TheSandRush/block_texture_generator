@@ -1,6 +1,3 @@
-// Add this at the top of your script.js file
-import { imageFilesToVxb, saveVxbFile } from './vxb-converter.js';
-
 // Initialize Three.js scene
 let scene, camera, renderer, cube, textureSize = 32;
 let previewCanvas, previewCtx;
@@ -238,7 +235,8 @@ function init() {
         const modal = document.getElementById('export-modal');
         if (modal) {
             const closeBtns = document.getElementsByClassName('close');
-            const downloadBtn = document.getElementById('download-button');
+            const pngDownloadBtn = document.getElementById('download-png-button');
+            const vxbDownloadBtn = document.getElementById('download-vxb-button');
             
             if (closeBtns.length > 0) {
                 closeBtns[0].onclick = function() {
@@ -252,43 +250,20 @@ function init() {
                 }
             };
             
-            // Modal setup
-const modal = document.getElementById('export-modal');
-if (modal) {
-    const closeBtns = document.getElementsByClassName('close');
-    const pngDownloadBtn = document.getElementById('download-png-button');
-    const vxbDownloadBtn = document.getElementById('download-vxb-button');
-    
-    if (closeBtns.length > 0) {
-        closeBtns[0].onclick = function() {
-            modal.style.display = 'none';
-        };
-    }
-    
-    window.onclick = function(event) {
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
-    };
-    
-    if (pngDownloadBtn) {
-        pngDownloadBtn.addEventListener('click', function() {
-            const link = document.createElement('a');
-            link.download = 'magic-block-texture.png';
-            const downloadImg = document.getElementById('download-image');
-            if (downloadImg) {
-                link.href = downloadImg.src;
-                link.click();
-            }
-        });
-    }
-    
-    if (vxbDownloadBtn) {
-        vxbDownloadBtn.addEventListener('click', exportAsVxb);
-    }
-}
+            if (pngDownloadBtn) {
+                pngDownloadBtn.addEventListener('click', function() {
+                    const link = document.createElement('a');
+                    link.download = 'magic-block-texture.png';
+                    const downloadImg = document.getElementById('download-image');
+                    if (downloadImg) {
+                        link.href = downloadImg.src;
+                        link.click();
                     }
                 });
+            }
+            
+            if (vxbDownloadBtn) {
+                vxbDownloadBtn.addEventListener('click', exportAsVxb);
             }
         }
         console.log("Modal setup complete");
@@ -601,8 +576,16 @@ function exportTexture() {
     }
 }
 
-async function exportAsVxb() {
+function exportAsVxb() {
     try {
+        // Use the vxb-converter.js functions
+        const VxbConverter = window.VxbConverter;
+        if (!VxbConverter) {
+            console.error("VXB Converter not available");
+            alert("VXB Converter not available. Make sure vxb-converter.js is loaded correctly.");
+            return;
+        }
+        
         // Get the texture faces in the required order: right, back, bottom, top, front, left
         const faces = window.textureFaces;
         if (!faces) {
@@ -612,30 +595,41 @@ async function exportAsVxb() {
         
         // Extract ImageData from each canvas
         const faceOrder = ['right', 'back', 'bottom', 'top', 'front', 'left'];
-        const imagesData = faceOrder.map(faceName => {
-            const canvas = faces[faceName];
-            if (!canvas) {
-                console.error(`Missing face: ${faceName}`);
-                return null;
-            }
-            return canvas.getContext('2d').getImageData(0, 0, textureSize, textureSize);
+        const imageBlobs = [];
+        
+        // Create blobs for each face
+        const blobPromises = faceOrder.map(faceName => {
+            return new Promise((resolve, reject) => {
+                const canvas = faces[faceName];
+                if (!canvas) {
+                    console.error(`Missing face: ${faceName}`);
+                    reject(`Missing face: ${faceName}`);
+                    return;
+                }
+                
+                canvas.toBlob(blob => {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(`Failed to create blob for face: ${faceName}`);
+                    }
+                }, 'image/png');
+            });
         });
         
-        // Ensure we have all faces
-        if (imagesData.some(img => img === null)) {
-            alert("Error: Some texture faces are missing. Unable to export as VXB.");
-            return;
-        }
-        
-        // Convert to VXB format
-        const vxbBuffer = await convertImagesToVxb(imagesData);
-        
-        // Generate filename based on material type
-        const materialType = document.getElementById('material-type').value || 'block';
-        
-        // Save the file
-        saveVxbFile(vxbBuffer, `magic_${materialType}`);
-        
+        // Process all the blobs
+        Promise.all(blobPromises)
+            .then(blobs => {
+                // Generate filename based on material type
+                const materialType = document.getElementById('material-type').value || 'block';
+                
+                // Use the VXB converter to convert and save
+                return VxbConverter.convertAndSaveMultipleVxb(blobs, `magic_${materialType}`);
+            })
+            .catch(error => {
+                console.error("Error processing textures for VXB:", error);
+                alert("Failed to export as VXB. See console for details.");
+            });
     } catch (error) {
         console.error("Error exporting as VXB:", error);
         alert("Failed to export as VXB. See console for details.");
@@ -707,6 +701,8 @@ function randomizeSettings() {
 
 function applyPreset(presetName) {
     const preset = presets[presetName];
+    iffunction applyPreset(presetName) {
+    const preset = presets[presetName];
     if (!preset) return;
     
     // Apply preset values to form elements
@@ -764,28 +760,6 @@ function hexToRgb(hex) {
         g: parseInt(result[2], 16),
         b: parseInt(result[3], 16)
     } : { r: 0, g: 0, b: 0 };
-}
-
-// This is a simplified version for importing without module dependencies
-async function convertImagesToVxb(imagesData) {
-    // This function would typically call the full implementation from vxb-converter.js
-    // For this integration, we'll just call the imported function
-    return await imageFilesToVxb(
-        // Convert ImageData to Blobs
-        await Promise.all(imagesData.map(async imageData => {
-            const canvas = document.createElement('canvas');
-            canvas.width = imageData.width;
-            canvas.height = imageData.height;
-            const ctx = canvas.getContext('2d');
-            ctx.putImageData(imageData, 0, 0);
-            
-            return new Promise(resolve => {
-                canvas.toBlob(blob => {
-                    resolve(blob);
-                }, 'image/png');
-            });
-        }))
-    );
 }
 
 // Initialize the application when the page loads
