@@ -1,36 +1,3 @@
- let scene, camera, renderer, cube, textureSize = 32; let previewCanvas, previewCtx; let isRotating = true; let textures = {}; let simplex; // Material presets const prese
-pasted
-P
-there seems to be a syntax error at line 238. can you provide a clean .js again.
-
-Edit
-Looking at the JavaScript you provided, I can see there's an issue with the code structure around line 238, where the onWindowResize function appears to be defined inside another function. Let me provide a complete, cleaned-up version of the script.js file with this error fixed:
-
-
-Clean script.js File
-Click to open code
-
-
-
-Retry
-
-Claude can make mistakes. Please double-check responses.
-
-
-
-
-
-No file chosen
-
-3.7 Sonnet
-
-Choose style
-Tip:
-Long chats cause you to reach your usage limits faster.
-Start a new chat 
-
-Clean script.js File
-
 // Initialize Three.js scene
 let scene, camera, renderer, cube, textureSize = 32;
 let previewCanvas, previewCtx;
