@@ -235,7 +235,6 @@ function onWindowResize() {
         camera.position.z = 2.5;
     }
 }
-);
             }
         }
         console.log("Modal setup complete");
