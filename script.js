@@ -1,12 +1,21 @@
 // Initialize Three.js scene
-let scene, camera, renderer, cube, textureSize = 32;
-let previewCanvas, previewCtx;
-let isRotating = true;
-let textures = {};
-let simplex;
+if (typeof window.scene === 'undefined') {
+    window.scene = undefined;
+    window.camera = undefined;
+    window.renderer = undefined;
+    window.controls = undefined;
+    window.cube = undefined;
+    window.textureSize = 32;
+    window.previewCanvas = undefined;
+    window.previewCtx = undefined;
+    window.isRotating = true;
+    window.textures = {};
+    window.simplex = undefined;
+    window.sharedColorPalette = null;
+}
 
 // Material presets
-const presets = {
+const presets = window.blockPresets || {
     stone: {
         materialType: 'stone',
         baseColor: '#8c8c8c',
@@ -75,6 +84,9 @@ const presets = {
     }
 };
 
+// Save presets to window to prevent redeclaration
+window.blockPresets = presets;
+
 // Handle orientation change properly
 function handleOrientationChange() {
     // Give the browser time to update dimensions after orientation change
@@ -109,6 +121,202 @@ function onWindowResize() {
         // Desktops and larger devices
         camera.position.z = 2.5;
     }
+
+    // Update controls target if needed
+    if (controls) {
+        controls.update();
+    }
+}
+
+// Color quantization function to limit the palette to 255 colors or less
+function quantizeColors(imageData, maxColors = 64) {
+    const width = imageData.width;
+    const height = imageData.height;
+    const pixels = imageData.data;
+    const colorMap = new Map();
+    const colorCounts = new Map();
+    
+    // First pass: count all unique colors
+    for (let i = 0; i < pixels.length; i += 4) {
+        const r = pixels[i];
+        const g = pixels[i + 1];
+        const b = pixels[i + 2];
+        const colorKey = `${r},${g},${b}`;
+        
+        if (colorCounts.has(colorKey)) {
+            colorCounts.set(colorKey, colorCounts.get(colorKey) + 1);
+        } else {
+            colorCounts.set(colorKey, 1);
+        }
+    }
+    
+    // Check if we already have fewer colors than the max
+    if (colorCounts.size <= maxColors) {
+        console.log(`Texture already has ${colorCounts.size} colors, no quantization needed.`);
+        return imageData;
+    }
+    
+    // Sort colors by frequency
+    const sortedColors = Array.from(colorCounts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, maxColors);
+    
+    // Create a mapping from original colors to palette colors
+    sortedColors.forEach(([colorKey]) => {
+        colorMap.set(colorKey, colorKey);
+    });
+    
+    // For colors not in the palette, map to the closest palette color
+    const unmappedColors = Array.from(colorCounts.keys())
+        .filter(colorKey => !colorMap.has(colorKey));
+    
+    unmappedColors.forEach(colorKey => {
+        const [r, g, b] = colorKey.split(',').map(Number);
+        let closestColorKey = sortedColors[0][0];
+        let minDistance = Number.MAX_VALUE;
+        
+        sortedColors.forEach(([paletteColorKey]) => {
+            const [pr, pg, pb] = paletteColorKey.split(',').map(Number);
+            // Simple Euclidean distance in RGB space
+            const distance = Math.sqrt(
+                Math.pow(pr - r, 2) + 
+                Math.pow(pg - g, 2) + 
+                Math.pow(pb - b, 2)
+            );
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestColorKey = paletteColorKey;
+            }
+        });
+        
+        colorMap.set(colorKey, closestColorKey);
+    });
+    
+    // Second pass: apply the color mapping to the image
+    for (let i = 0; i < pixels.length; i += 4) {
+        const r = pixels[i];
+        const g = pixels[i + 1];
+        const b = pixels[i + 2];
+        const colorKey = `${r},${g},${b}`;
+        
+        const mappedColorKey = colorMap.get(colorKey);
+        if (mappedColorKey) {
+            const [pr, pg, pb] = mappedColorKey.split(',').map(Number);
+            pixels[i] = pr;
+            pixels[i + 1] = pg;
+            pixels[i + 2] = pb;
+        }
+    }
+    
+    console.log(`Texture quantized from ${colorCounts.size} to ${sortedColors.length} colors.`);
+    return imageData;
+}
+
+// Generate a shared color palette from all faces
+function generateSharedColorPalette() {
+    const facesData = [];
+    const faces = ['front', 'back', 'top', 'bottom', 'left', 'right'];
+    
+    // Create temporary canvases for each face
+    faces.forEach(face => {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = textureSize;
+        tempCanvas.height = textureSize;
+        
+        // Generate raw texture without quantization
+        generateTextureForFace(tempCanvas, face, false);
+        
+        // Get pixel data
+        const ctx = tempCanvas.getContext('2d');
+        const imageData = ctx.getImageData(0, 0, textureSize, textureSize);
+        facesData.push(imageData.data);
+    });
+    
+    // Count all unique colors across all faces
+    const colorCounts = new Map();
+    
+    facesData.forEach(data => {
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const colorKey = `${r},${g},${b}`;
+            
+            if (colorCounts.has(colorKey)) {
+                colorCounts.set(colorKey, colorCounts.get(colorKey) + 1);
+            } else {
+                colorCounts.set(colorKey, 1);
+            }
+        }
+    });
+    
+    console.log(`Total unique colors across all faces: ${colorCounts.size}`);
+    
+    // If we already have fewer colors than the max, no need to quantize
+    if (colorCounts.size <= 255) {
+        console.log(`Already have ${colorCounts.size} colors, no quantization needed.`);
+        // Convert to palette format
+        return Array.from(colorCounts.keys()).map(key => {
+            const [r, g, b] = key.split(',').map(Number);
+            return {r, g, b};
+        });
+    }
+    
+    // Sort colors by frequency
+    const sortedColors = Array.from(colorCounts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 255);
+    
+    // Convert to palette format
+    const palette = sortedColors.map(([colorKey]) => {
+        const [r, g, b] = colorKey.split(',').map(Number);
+        return {r, g, b};
+    });
+    
+    console.log(`Generated shared palette with ${palette.length} colors.`);
+    return palette;
+}
+
+// Find closest color in palette
+function findClosestColor(r, g, b, palette) {
+    let closestColor = palette[0];
+    let minDistance = Number.MAX_VALUE;
+    
+    palette.forEach(color => {
+        // Simple Euclidean distance in RGB space
+        const distance = Math.sqrt(
+            Math.pow(color.r - r, 2) + 
+            Math.pow(color.g - g, 2) + 
+            Math.pow(color.b - b, 2)
+        );
+        
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestColor = color;
+        }
+    });
+    
+    return closestColor;
+}
+
+// Apply shared palette to image data
+function applySharedPalette(imageData, palette) {
+    const pixels = imageData.data;
+    
+    for (let i = 0; i < pixels.length; i += 4) {
+        const r = pixels[i];
+        const g = pixels[i + 1];
+        const b = pixels[i + 2];
+        
+        const closestColor = findClosestColor(r, g, b, palette);
+        
+        pixels[i] = closestColor.r;
+        pixels[i + 1] = closestColor.g;
+        pixels[i + 2] = closestColor.b;
+    }
+    
+    return imageData;
 }
 
 function init() {
@@ -135,13 +343,24 @@ function init() {
         renderer.setSize(containerWidth, containerHeight);
         canvasContainer.appendChild(renderer.domElement);
         
-        // Set up preview canvas
+        // Set up OrbitControls
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; // Add smooth damping
+        controls.dampingFactor = 0.05;
+        controls.enableZoom = true;
+        controls.minDistance = 1.5; // Minimum zoom distance
+        controls.maxDistance = 10;  // Maximum zoom distance
+        controls.enablePan = true;
+        controls.autoRotate = true; // Enable auto-rotation
+        controls.autoRotateSpeed = 2.0; // Rotation speed
+
+        // Set up preview canvas with willReadFrequently
         previewCanvas = document.getElementById('texture-preview');
         if (!previewCanvas) {
             console.error("Preview canvas element not found!");
             return; // Exit initialization if element is missing
         }
-        previewCtx = previewCanvas.getContext('2d');
+        previewCtx = previewCanvas.getContext('2d', { willReadFrequently: true });
         console.log("Preview canvas initialized");
         
         // Create initial textures
@@ -181,33 +400,43 @@ function init() {
         // Add event listeners for all input controls
         const inputs = document.querySelectorAll('input, select');
         inputs.forEach(input => {
-            if (input.type === 'range') {
-                input.addEventListener('input', function() {
-                    const valueInput = document.getElementById(this.id + '-value');
+            const updateControls = () => {
+                if (input.type === 'range') {
+                    const valueInput = document.getElementById(input.id + '-value');
                     if (valueInput) {
-                        valueInput.value = this.value;
+                        valueInput.value = input.value;
                     }
-                });
+                }
                 
+                if (input.type === 'color') {
+                    const hexInput = document.getElementById(input.id + '-hex');
+                    if (hexInput) {
+                        hexInput.value = input.value;
+                    }
+                }
+                
+                // Update textures immediately
+                updateTextures();
+            };
+
+            // Add input and change event listeners
+            input.addEventListener('input', updateControls);
+            input.addEventListener('change', updateControls);
+            
+            if (input.type === 'range') {
                 const numberInput = document.getElementById(input.id + '-value');
                 if (numberInput) {
                     numberInput.addEventListener('input', function() {
                         const rangeInput = document.getElementById(input.id);
                         if (rangeInput) {
                             rangeInput.value = this.value;
+                            updateTextures();
                         }
                     });
                 }
             }
             
             if (input.type === 'color') {
-                input.addEventListener('input', function() {
-                    const hexInput = document.getElementById(this.id + '-hex');
-                    if (hexInput) {
-                        hexInput.value = this.value;
-                    }
-                });
-                
                 const hexInput = document.getElementById(input.id + '-hex');
                 if (hexInput) {
                     hexInput.addEventListener('input', function() {
@@ -215,6 +444,7 @@ function init() {
                             const colorInput = document.getElementById(input.id.replace('-hex', ''));
                             if (colorInput) {
                                 colorInput.value = this.value;
+                                updateTextures();
                             }
                         }
                     });
@@ -290,19 +520,20 @@ function init() {
 }
 
 function toggleRotation() {
-    isRotating = !isRotating;
-    const rotationToggleBtn = document.getElementById('rotation-toggle');
-    if (rotationToggleBtn) {
-        rotationToggleBtn.textContent = isRotating ? 'Pause Rotation' : 'Resume Rotation';
+    if (controls) {
+        controls.autoRotate = !controls.autoRotate;
+        const rotationToggleBtn = document.getElementById('rotation-toggle');
+        if (rotationToggleBtn) {
+            rotationToggleBtn.textContent = controls.autoRotate ? 'Pause Rotation' : 'Resume Rotation';
+        }
     }
 }
 
 function animate() {
     requestAnimationFrame(animate);
     
-    if (isRotating && cube) {
-        cube.rotation.x += 0.005;
-        cube.rotation.y += 0.01;
+    if (controls) {
+        controls.update(); // Update controls in animation loop
     }
     
     if (renderer && scene && camera) {
@@ -311,6 +542,10 @@ function animate() {
 }
 
 function createTextures() {
+    // Generate a shared color palette for all faces
+    sharedColorPalette = generateSharedColorPalette();
+    console.log(`Using shared palette with ${sharedColorPalette.length} colors`);
+    
     const faces = ['front', 'back', 'top', 'bottom', 'left', 'right'];
     
     faces.forEach(face => {
@@ -318,7 +553,7 @@ function createTextures() {
         canvas.width = textureSize;
         canvas.height = textureSize;
         
-        generateTextureForFace(canvas, face);
+        generateTextureForFace(canvas, face, true);
         
         textures[face] = new THREE.CanvasTexture(canvas);
         textures[face].magFilter = THREE.NearestFilter;
@@ -330,6 +565,10 @@ function createTextures() {
 }
 
 function updateTextures() {
+    // Regenerate the shared palette
+    sharedColorPalette = generateSharedColorPalette();
+    console.log(`Updated shared palette with ${sharedColorPalette.length} colors`);
+    
     const faces = ['front', 'back', 'top', 'bottom', 'left', 'right'];
     
     faces.forEach(face => {
@@ -337,7 +576,7 @@ function updateTextures() {
         canvas.width = textureSize;
         canvas.height = textureSize;
         
-        generateTextureForFace(canvas, face);
+        generateTextureForFace(canvas, face, true);
         
         if (textures[face]) {
             textures[face].image = canvas;
@@ -349,8 +588,8 @@ function updateTextures() {
     updatePreviewTexture();
 }
 
-function generateTextureForFace(canvas, face) {
-    const ctx = canvas.getContext('2d');
+function generateTextureForFace(canvas, face, useSharedPalette = true) {
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     
     // Get form values with null checks
     const materialTypeElement = document.getElementById('material-type');
@@ -426,15 +665,13 @@ function generateTextureForFace(canvas, face) {
                     materialNoise = (simplex.noise2D((x + 400) / (noiseScale * 2), (y + 400) / (noiseScale * 2)) + 1) / 2;
                     break;
                 case 'brick':
-                    const brickW = Math.floor(textureSize / 3);  // Larger bricks (was 4)
+                    const brickW = Math.floor(textureSize / 3);
                     const brickH = Math.floor(textureSize / 2);
-                    const mortarSize = 1;  // Fixed mortar size
+                    const mortarSize = 1;
                     const offsetX = (Math.floor(y / brickH) % 2) * Math.floor(brickW / 2);
                     const brickX = (x + offsetX) % brickW;
                     const brickY = y % brickH;
-                    // Cleaner mortar lines with consistent width
                     const isMortar = brickX < mortarSize || brickY < mortarSize;
-                    // No noise in the mortar or brick faces
                     materialNoise = isMortar ? 0.1 : 0.9;
                     break;
                 case 'sand':
@@ -491,6 +728,20 @@ function generateTextureForFace(canvas, face) {
             ctx.fillRect(x, y, 1, 1);
         }
     }
+    
+    // Apply the shared palette if needed
+    if (useSharedPalette && sharedColorPalette) {
+        const imageData = ctx.getImageData(0, 0, textureSize, textureSize);
+        const paletteAppliedData = applySharedPalette(imageData, sharedColorPalette);
+        ctx.putImageData(paletteAppliedData, 0, 0);
+    } else if (!useSharedPalette) {
+        // No need to quantize here since we're just collecting colors for the shared palette
+    } else {
+        // Fallback to individual quantization when shared palette isn't available
+        const imageData = ctx.getImageData(0, 0, textureSize, textureSize);
+        const quantizedData = quantizeColors(imageData, 255);
+        ctx.putImageData(quantizedData, 0, 0);
+    }
 }
 
 function updatePreviewTexture() {
@@ -534,7 +785,7 @@ function exportTexture() {
     const exportCanvas = document.createElement('canvas');
     exportCanvas.width = textureSize * 3;
     exportCanvas.height = textureSize * 2;
-    const exportCtx = exportCanvas.getContext('2d');
+    const exportCtx = exportCanvas.getContext('2d', { willReadFrequently: true });
     
     // Arrange faces in a grid
     const arrangement = [
@@ -601,7 +852,7 @@ function exportAsVxb() {
             const canvas = document.createElement('canvas');
             canvas.width = 32;
             canvas.height = 32;
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
             
             // Draw the face texture on the new canvas
             if (faces[faceName]) {
@@ -613,7 +864,10 @@ function exportAsVxb() {
                 console.warn(`Missing face texture: ${faceName}, using default color`);
             }
             
+            // Store the canvas
             faceCanvases[faceName] = canvas;
+            
+            // NOTE: Removing the direct quantization call here, as color quantization will be handled by VxbConverter
         });
         
         // Create blobs for each face in the correct order
@@ -651,6 +905,7 @@ function exportAsVxb() {
         alert("Failed to export as VXB. See console for details.");
     }
 }
+
 function randomizeSettings() {
     // Get all form elements for randomization
     const materialTypeElement = document.getElementById('material-type');
