@@ -1171,7 +1171,7 @@ function initPanelCollapse() {
         if (heading && content) {
             // Add aria attributes for accessibility
             heading.setAttribute('role', 'button');
-            heading.setAttribute('aria-expanded', 'true');
+            heading.setAttribute('aria-expanded', 'false'); // Changed from 'true' to 'false' for default collapsed state
             heading.setAttribute('aria-controls', `panel-${section.id || Math.random().toString(36).substr(2, 9)}`);
             content.setAttribute('id', heading.getAttribute('aria-controls'));
             
@@ -1185,9 +1185,11 @@ function initPanelCollapse() {
                 localStorage.setItem(`panel-${panelId}-collapsed`, isCollapsed);
             });
             
-            // Restore panel state from localStorage
+            // Set default state to collapsed unless localStorage has a specific value
             const panelId = heading.getAttribute('aria-controls');
-            const isCollapsed = localStorage.getItem(`panel-${panelId}-collapsed`) === 'true';
+            const savedState = localStorage.getItem(`panel-${panelId}-collapsed`);
+            const isCollapsed = savedState !== null ? savedState === 'true' : true; // Default to true (collapsed) if no saved state
+            
             if (isCollapsed) {
                 section.classList.add('collapsed');
                 heading.setAttribute('aria-expanded', 'false');
