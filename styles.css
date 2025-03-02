@@ -451,8 +451,6 @@ input[type="color"]::-webkit-color-swatch {
     font-size: 0.8rem;
 }
 
-/* Add these mobile-specific styles to the end of your CSS file */
-
 /* Mobile responsive styles */
 @media (max-width: 768px) {
     .main-content {
@@ -461,14 +459,22 @@ input[type="color"]::-webkit-color-swatch {
     
     #canvas-container {
         order: 1;
-        height: 40vh;
-        min-height: 200px;
+        height: 40vh; /* Fixed height for the cube container */
+        min-height: 250px;
+        width: 100%;
+        position: relative;
+    }
+    
+    #canvas-container canvas {
+        width: 100% !important;
+        height: 100% !important;
     }
     
     .controls-panel {
         order: 2;
         width: 100%;
         max-height: 60vh;
+        overflow-y: auto;
         border-right: none;
         border-top: 1px solid rgba(32, 196, 202, 0.3);
     }
@@ -476,15 +482,32 @@ input[type="color"]::-webkit-color-swatch {
     .texture-preview-container {
         top: 10px;
         right: 10px;
-        width: 100px;
+        width: 110px;
+        padding: 8px;
+    }
+    
+    .texture-preview-container h4 {
+        margin-bottom: 5px;
+        font-size: 0.8rem;
+    }
+    
+    .texture-preview-container .action-buttons {
+        width: 100%;
+    }
+    
+    .texture-preview-container .action-buttons button {
+        font-size: 0.7rem;
+        padding: 5px;
+        white-space: nowrap;
+        width: 100%;
     }
     
     .panel-section h3 {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
     
     .control-group label {
-        font-size: 0.75rem;
+        font-size: 0.8rem;
     }
     
     .primary-actions {
@@ -528,7 +551,7 @@ input[type="color"]::-webkit-color-swatch {
     }
     
     .texture-preview-container {
-        width: 80px;
+        width: 100px;
     }
     
     .presets-container {
@@ -536,7 +559,28 @@ input[type="color"]::-webkit-color-swatch {
     }
     
     .control-group.slider input[type="number"] {
-        width: 35px;
+        width: 38px;
         font-size: 0.7rem;
+    }
+}
+
+/* Landscape orientation warning */
+@media (max-width: 900px) and (orientation: landscape) {
+    body::before {
+        content: "Please rotate your device to portrait mode for the best experience";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.9);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        padding: 20px;
+        text-align: center;
+        font-size: 1.2rem;
     }
 }
