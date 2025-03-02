@@ -164,16 +164,21 @@
         </div>
     </div>
     
-    <div id="export-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Texture Export</h2>
-            <img id="download-image" src="" alt="Texture Atlas">
-            <p>Right-click on the image and select "Save image as..." or click the button below to download.</p>
-            <button id="download-button" class="primary-btn">Download Texture</button>
+   <div id="export-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Texture Export</h2>
+        <img id="download-image" src="" alt="Texture Atlas">
+        <p>Choose your export format:</p>
+        <div class="export-buttons">
+            <button id="download-png-button" class="primary-btn">Download PNG</button>
+            <button id="download-vxb-button" class="primary-btn">Download VXB</button>
         </div>
+        <p class="export-info">VXB format can be used in other voxel applications.</p>
     </div>
-    
+</div>
+       <script type="module" src="vxb-converter.js"></script> 
+    <script type="module" src="script.js"></script>
     <script src="script.js"></script>
     <script>
         // Add section collapsing functionality
