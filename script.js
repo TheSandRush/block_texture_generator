@@ -523,6 +523,22 @@ function init() {
         }, 1500); // Increased timeout to ensure everything is ready
 
         initCustomTextureHandlers();
+
+        // Add preview container expand/collapse functionality
+        const previewContainer = document.querySelector('.texture-preview-container');
+        if (previewContainer) {
+            previewContainer.addEventListener('click', function(e) {
+                // Don't toggle if clicking on a button
+                if (e.target.tagName === 'BUTTON') return;
+                
+                this.classList.toggle('expanded');
+                
+                // Update preview faces when expanded
+                if (this.classList.contains('expanded')) {
+                    updateFaceCanvases();
+                }
+            });
+        }
     } catch (error) {
         console.error("Initialization error:", error);
         alert("There was an error initializing Magic Block. Please check the console for details.");
@@ -570,6 +586,9 @@ function createTextures() {
         textures[face].minFilter = THREE.NearestFilter;
     });
     
+    // Add this line to update the face previews
+    updateFaceCanvases();
+    
     // Also update the preview texture
     updatePreviewTexture();
 }
@@ -593,6 +612,9 @@ function updateTextures() {
             textures[face].needsUpdate = true;
         }
     });
+    
+    // Add this line to update the face previews
+    updateFaceCanvases();
     
     // Also update the preview texture
     updatePreviewTexture();
@@ -795,6 +817,24 @@ function updatePreviewTexture() {
             previewCtx.fillRect(x, y, 1, 1);
         }
     }
+}
+
+function updateFaceCanvases() {
+    const faces = ['front', 'back', 'top', 'bottom', 'left', 'right'];
+    faces.forEach(face => {
+        if (!textures[face]) return;
+        
+        const faceCard = document.querySelector(`.face-card[data-face="${face}"] canvas`);
+        if (!faceCard) return;
+        
+        const ctx = faceCard.getContext('2d');
+        const sourceCanvas = textures[face].image;
+        
+        // Clear and draw the face texture
+        ctx.clearRect(0, 0, faceCard.width, faceCard.height);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(sourceCanvas, 0, 0, faceCard.width, faceCard.height);
+    });
 }
 
 function exportTexture() {
