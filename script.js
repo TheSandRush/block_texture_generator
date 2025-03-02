@@ -203,7 +203,9 @@ function init() {
                     modal.style.display = 'none';
                 };
             }
-            
+    // Trigger resize handler once to set proper dimensions
+onWindowResize();
+        
             window.onclick = function(event) {
                 if (event.target === modal) {
                     modal.style.display = 'none';
@@ -257,9 +259,21 @@ function onWindowResize() {
     const containerWidth = canvasContainer.clientWidth;
     const containerHeight = canvasContainer.clientHeight;
     
+    // Set aspect ratio based on the container dimensions
     camera.aspect = containerWidth / containerHeight;
     camera.updateProjectionMatrix();
+    
+    // Update renderer size to match container
     renderer.setSize(containerWidth, containerHeight);
+    
+    // On mobile, adjust the camera position to ensure the cube is fully visible
+    if (window.innerWidth <= 768) {
+        // Move camera slightly farther back on mobile
+        camera.position.z = 3.5;
+    } else {
+        // Default distance for desktop
+        camera.position.z = 3;
+    }
 }
 
 function animate() {
