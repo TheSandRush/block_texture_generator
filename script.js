@@ -578,9 +578,8 @@ function exportTexture() {
 
 function exportAsVxb() {
     try {
-        // Use the vxb-converter.js functions
-        const VxbConverter = window.VxbConverter;
-        if (!VxbConverter) {
+        // Check if VxbConverter is available
+        if (!window.VxbConverter) {
             console.error("VXB Converter not available");
             alert("VXB Converter not available. Make sure vxb-converter.js is loaded correctly.");
             return;
@@ -624,7 +623,7 @@ function exportAsVxb() {
                 const materialType = document.getElementById('material-type').value || 'block';
                 
                 // Use the VXB converter to convert and save
-                return VxbConverter.convertAndSaveMultipleVxb(blobs, `magic_${materialType}`);
+                return window.VxbConverter.convertAndSaveMultipleVxb(blobs, `magic_${materialType}`);
             })
             .catch(error => {
                 console.error("Error processing textures for VXB:", error);
@@ -700,8 +699,6 @@ function randomizeSettings() {
 }
 
 function applyPreset(presetName) {
-    const preset = presets[presetName];
-    iffunction applyPreset(presetName) {
     const preset = presets[presetName];
     if (!preset) return;
     
