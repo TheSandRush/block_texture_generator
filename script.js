@@ -3,6 +3,7 @@ if (typeof window.scene === 'undefined') {
     window.scene = undefined;
     window.camera = undefined;
     window.renderer = undefined;
+    window.controls = undefined;
     window.cube = undefined;
     window.textureSize = 32;
     window.previewCanvas = undefined;
@@ -119,6 +120,11 @@ function onWindowResize() {
     } else {
         // Desktops and larger devices
         camera.position.z = 2.5;
+    }
+
+    // Update controls target if needed
+    if (controls) {
+        controls.update();
     }
 }
 
@@ -337,6 +343,17 @@ function init() {
         renderer.setSize(containerWidth, containerHeight);
         canvasContainer.appendChild(renderer.domElement);
         
+        // Set up OrbitControls
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; // Add smooth damping
+        controls.dampingFactor = 0.05;
+        controls.enableZoom = true;
+        controls.minDistance = 1.5; // Minimum zoom distance
+        controls.maxDistance = 10;  // Maximum zoom distance
+        controls.enablePan = true;
+        controls.autoRotate = true; // Enable auto-rotation
+        controls.autoRotateSpeed = 2.0; // Rotation speed
+
         // Set up preview canvas with willReadFrequently
         previewCanvas = document.getElementById('texture-preview');
         if (!previewCanvas) {
@@ -492,19 +509,20 @@ function init() {
 }
 
 function toggleRotation() {
-    isRotating = !isRotating;
-    const rotationToggleBtn = document.getElementById('rotation-toggle');
-    if (rotationToggleBtn) {
-        rotationToggleBtn.textContent = isRotating ? 'Pause Rotation' : 'Resume Rotation';
+    if (controls) {
+        controls.autoRotate = !controls.autoRotate;
+        const rotationToggleBtn = document.getElementById('rotation-toggle');
+        if (rotationToggleBtn) {
+            rotationToggleBtn.textContent = controls.autoRotate ? 'Pause Rotation' : 'Resume Rotation';
+        }
     }
 }
 
 function animate() {
     requestAnimationFrame(animate);
     
-    if (isRotating && cube) {
-        cube.rotation.x += 0.005;
-        cube.rotation.y += 0.01;
+    if (controls) {
+        controls.update(); // Update controls in animation loop
     }
     
     if (renderer && scene && camera) {
