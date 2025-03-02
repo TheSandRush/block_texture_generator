@@ -88,7 +88,8 @@ function init() {
         
         // Set up camera
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 3;
+        camera.position.z = 2.5; // Closer camera position (was 3) for a larger block view
+
         
         // Set up renderer with transparency
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -266,13 +267,13 @@ function onWindowResize() {
     // Update renderer size to match container
     renderer.setSize(containerWidth, containerHeight);
     
-    // On mobile, adjust the camera position to ensure the cube is fully visible
+    // Set camera position based on device
     if (window.innerWidth <= 768) {
-        // Move camera slightly farther back on mobile
-        camera.position.z = 3.5;
+        // Move camera slightly closer on mobile for a larger block
+        camera.position.z = 2.2;
     } else {
         // Default distance for desktop
-        camera.position.z = 3;
+        camera.position.z = 2.5;
     }
 }
 
