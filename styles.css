@@ -5,6 +5,10 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+textarea, select, input {
+  field-sizing: content;
+}
+
 body {
     color: #cccccc;
     background-color: #121212;
@@ -14,6 +18,59 @@ body {
     background-attachment: fixed;
     height: 100vh;
     overflow: hidden;
+}
+
+/* Styles for math patterns */
+#math-patterns-section textarea {
+    width: 100%;
+    background-color: rgba(30, 30, 30, 0.8);
+    border: 1px solid rgba(32, 196, 202, 0.3);
+    border-radius: 4px;
+    color: white;
+    font-size: 0.85rem;
+    font-family: monospace;
+    padding: 8px;
+    resize: vertical;
+}
+
+#math-patterns-section textarea:focus {
+    outline: none;
+    border-color: #20c4ca;
+    box-shadow: 0 0 0 2px rgba(32, 196, 202, 0.2);
+}
+
+.help-text {
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+.math-presets {
+    margin-top: 12px;
+}
+
+.math-preset-btn {
+    padding: 0.4rem 0.3rem;
+    background-color: rgba(30, 30, 30, 0.6);
+    border: 1px solid rgba(32, 196, 202, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: white;
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.math-preset-btn:hover {
+    background-color: rgba(32, 196, 202, 0.2);
+    border-color: #20c4ca;
+}
+
+.math-preset-btn.active {
+    background-color: rgba(32, 196, 202, 0.4);
+    border-color: #20c4ca;
+    color: #fff;
 }
 
 .container {

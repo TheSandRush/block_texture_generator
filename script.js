@@ -327,6 +327,131 @@ function applySharedPalette(imageData, palette) {
     return imageData;
 }
 
+// Math pattern generation functions
+const mathPatterns = {
+    'sine-waves': (x, y, scale) => {
+        const freq = scale / 50;
+        return (Math.sin(x * freq) * Math.cos(y * freq) + 1) / 2;
+    },
+    
+    'ripples': (x, y, scale) => {
+        const centerX = textureSize / 2;
+        const centerY = textureSize / 2;
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const freq = scale / 20;
+        return (Math.sin(dist * freq) + 1) / 2;
+    },
+    
+    'voronoi': (x, y, scale) => {
+        const points = [];
+        const numPoints = Math.floor(scale / 5) + 2;
+        
+        // Generate random points if not already generated
+        if (!window.voronoiPoints || window.voronoiPoints.length !== numPoints) {
+            window.voronoiPoints = [];
+            for (let i = 0; i < numPoints; i++) {
+                window.voronoiPoints.push({
+                    x: Math.random() * textureSize,
+                    y: Math.random() * textureSize
+                });
+            }
+        }
+        
+        // Find minimum distance to any point
+        let minDist = Infinity;
+        for (const point of window.voronoiPoints) {
+            const dx = x - point.x;
+            const dy = y - point.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            minDist = Math.min(minDist, dist);
+        }
+        
+        return minDist / (textureSize / 2);
+    },
+    
+    'mandelbrot': (x, y, scale) => {
+        const maxIter = 50;
+        const zoom = scale / 10;
+        
+        // Map texture coordinates to mandelbrot space
+        const real = (x - textureSize / 2) / (textureSize / 4 * zoom);
+        const imag = (y - textureSize / 2) / (textureSize / 4 * zoom);
+        
+        let zr = 0;
+        let zi = 0;
+        let i;
+        
+        for (i = 0; i < maxIter; i++) {
+            const zr2 = zr * zr;
+            const zi2 = zi * zi;
+            
+            if (zr2 + zi2 > 4) break;
+            
+            const newZr = zr2 - zi2 + real;
+            const newZi = 2 * zr * zi + imag;
+            
+            zr = newZr;
+            zi = newZi;
+        }
+        
+        return i / maxIter;
+    },
+    
+    'perlin-flow': (x, y, scale) => {
+        const freq = scale / 50;
+        const noise1 = simplex.noise2D(x * freq, y * freq);
+        const noise2 = simplex.noise2D((x + 100) * freq, (y + 100) * freq);
+        const angle = noise1 * Math.PI * 2;
+        const strength = noise2;
+        
+        return (Math.sin(angle) * strength + 1) / 2;
+    },
+    
+    'fractal': (x, y, scale) => {
+        let value = 0;
+        let amplitude = 1;
+        let frequency = scale / 50;
+        
+        // Add multiple layers of noise with different frequencies
+        for (let i = 0; i < 4; i++) {
+            value += amplitude * (simplex.noise2D(x * frequency, y * frequency) + 1) / 2;
+            amplitude *= 0.5;
+            frequency *= 2;
+        }
+        
+        return value / 1.875; // Normalize to 0-1 range
+    }
+};
+
+function generateMathPattern(x, y, patternType, scale, customFormula) {
+    if (customFormula) {
+        try {
+            // Create a safe function from the custom formula
+            const safeFunction = new Function('x', 'y', 'Math', `
+                try {
+                    return ${customFormula};
+                } catch (e) {
+                    return 0;
+                }
+            `);
+            
+            // Execute the formula and normalize result to 0-1 range
+            const result = safeFunction(x, y, Math);
+            return (result + 1) / 2;
+        } catch (e) {
+            console.error('Invalid math formula:', e);
+            return 0;
+        }
+    }
+    
+    const pattern = mathPatterns[patternType];
+    if (!pattern) return 0;
+    
+    return pattern(x, y, scale);
+}
+
 function init() {
     console.log("Initializing Magic Block...");
     try {
@@ -542,6 +667,9 @@ function init() {
 
         // Initialize panel collapse functionality
         initPanelCollapse();
+
+        // Initialize math controls
+        initMathControls();
     } catch (error) {
         console.error("Initialization error:", error);
         alert("There was an error initializing Magic Block. Please check the console for details.");
@@ -655,6 +783,15 @@ function generateTextureForFace(canvas, face, useSharedPalette = true) {
     const depth = depthElement ? parseInt(depthElement.value) / 100 : 0.3;
     const bevel = bevelElement ? parseInt(bevelElement.value) / 100 : 0.2;
     
+    // Get math-specific settings if pattern type is 'math'
+    const mathPatternTypeElement = document.getElementById('math-pattern-type');
+    const mathScaleElement = document.getElementById('math-scale');
+    const mathFormulaElement = document.getElementById('math-formula');
+    
+    const mathPatternType = mathPatternTypeElement ? mathPatternTypeElement.value : 'sine-waves';
+    const mathScale = mathScaleElement ? parseInt(mathScaleElement.value) : 10;
+    const customFormula = mathFormulaElement ? mathFormulaElement.value.trim() : '';
+    
     // Convert hex colors to RGB
     const baseRGB = hexToRgb(baseColor);
     const accentRGB = hexToRgb(accentColor);
@@ -668,27 +805,31 @@ function generateTextureForFace(canvas, face, useSharedPalette = true) {
         for (let y = 0; y < textureSize; y++) {
             let noiseValue = 0;
             
-            switch (patternType) {
-                case 'noise':
-                    noiseValue = (simplex.noise2D(x / noiseScale, y / noiseScale) + 1) / 2;
-                    break;
-                case 'cracked':
-                    const crack1 = Math.abs(simplex.noise2D(x / noiseScale, y / noiseScale)) > 0.7 ? 1 : 0;
-                    const crack2 = Math.abs(simplex.noise2D(x / (noiseScale * 2), y / (noiseScale * 2))) > 0.8 ? 1 : 0;
-                    noiseValue = crack1 || crack2 ? 1 : 0;
-                    break;
-                case 'checker':
-                    const checkSize = Math.max(1, Math.floor(textureSize / noiseScale));
-                    noiseValue = ((Math.floor(x / checkSize) + Math.floor(y / checkSize)) % 2 === 0) ? 0.2 : 0.8;
-                    break;
-                case 'striped':
-                    const stripeSize = Math.max(1, Math.floor(textureSize / noiseScale));
-                    noiseValue = (Math.floor(x / stripeSize) % 2 === 0) ? 0.3 : 0.7;
-                    break;
-                case 'zigzag':
-                    const zigSize = Math.max(1, Math.floor(textureSize / noiseScale));
-                    noiseValue = ((Math.floor(x / zigSize) + Math.floor(y / zigSize)) % 4 < 2) ? 0.3 : 0.7;
-                    break;
+            if (patternType === 'math') {
+                noiseValue = generateMathPattern(x, y, mathPatternType, mathScale, customFormula);
+            } else {
+                switch (patternType) {
+                    case 'noise':
+                        noiseValue = (simplex.noise2D(x / noiseScale, y / noiseScale) + 1) / 2;
+                        break;
+                    case 'cracked':
+                        const crack1 = Math.abs(simplex.noise2D(x / noiseScale, y / noiseScale)) > 0.7 ? 1 : 0;
+                        const crack2 = Math.abs(simplex.noise2D(x / (noiseScale * 2), y / (noiseScale * 2))) > 0.8 ? 1 : 0;
+                        noiseValue = crack1 || crack2 ? 1 : 0;
+                        break;
+                    case 'checker':
+                        const checkSize = Math.max(1, Math.floor(textureSize / noiseScale));
+                        noiseValue = ((Math.floor(x / checkSize) + Math.floor(y / checkSize)) % 2 === 0) ? 0.2 : 0.8;
+                        break;
+                    case 'striped':
+                        const stripeSize = Math.max(1, Math.floor(textureSize / noiseScale));
+                        noiseValue = (Math.floor(x / stripeSize) % 2 === 0) ? 0.3 : 0.7;
+                        break;
+                    case 'zigzag':
+                        const zigSize = Math.max(1, Math.floor(textureSize / noiseScale));
+                        noiseValue = ((Math.floor(x / zigSize) + Math.floor(y / zigSize)) % 4 < 2) ? 0.3 : 0.7;
+                        break;
+                }
             }
             
             // Apply material specific adjustments
@@ -1195,6 +1336,63 @@ function initPanelCollapse() {
                 heading.setAttribute('aria-expanded', 'false');
             }
         }
+    });
+}
+
+function initMathControls() {
+    const mathPatternsSection = document.getElementById('math-patterns-section');
+    const patternTypeSelect = document.getElementById('pattern-type');
+    const mathPatternSelect = document.getElementById('math-pattern-type');
+    const mathScaleInput = document.getElementById('math-scale');
+    const mathScaleValue = document.getElementById('math-scale-value');
+    const mathFormula = document.getElementById('math-formula');
+    const mathPresetButtons = document.querySelectorAll('.math-preset-btn');
+    
+    // Show/hide math controls based on pattern type
+    patternTypeSelect.addEventListener('change', function() {
+        if (this.value === 'math') {
+            mathPatternsSection.style.display = 'block';
+        } else {
+            mathPatternsSection.style.display = 'none';
+        }
+        updateTextures();
+    });
+    
+    // Initialize state
+    mathPatternsSection.style.display = patternTypeSelect.value === 'math' ? 'block' : 'none';
+    
+    // Math controls event listeners
+    mathPatternSelect.addEventListener('change', updateTextures);
+    mathScaleInput.addEventListener('input', () => {
+        mathScaleValue.value = mathScaleInput.value;
+        updateTextures();
+    });
+    mathScaleValue.addEventListener('input', () => {
+        mathScaleInput.value = mathScaleValue.value;
+        updateTextures();
+    });
+    mathFormula.addEventListener('input', () => {
+        if (mathFormula.value.trim()) {
+            mathPatternSelect.disabled = true;
+        } else {
+            mathPatternSelect.disabled = false;
+        }
+        updateTextures();
+    });
+    
+    // Math preset buttons
+    mathPresetButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const preset = button.dataset.preset;
+            mathPatternSelect.value = preset;
+            mathFormula.value = '';
+            mathPatternSelect.disabled = false;
+            updateTextures();
+            
+            // Update active state
+            mathPresetButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+        });
     });
 }
 
