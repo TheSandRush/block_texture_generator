@@ -670,6 +670,12 @@ function init() {
 
         // Initialize math controls
         initMathControls();
+        
+        // Initialize pattern layer system if available
+        if (window.patternLayerSystem && window.patternLayerSystem.init) {
+            window.patternLayerSystem.init();
+            console.log("Pattern Layer System initialized");
+        }
     } catch (error) {
         console.error("Initialization error:", error);
         alert("There was an error initializing Magic Block. Please check the console for details.");
@@ -937,6 +943,68 @@ function generateTextureForFace(canvas, face, useSharedPalette = true) {
         const quantizedData = quantizeColors(imageData, 255);
         ctx.putImageData(quantizedData, 0, 0);
     }
+    
+    // Check if we have pattern layers to apply
+    if (window.patternSystem && 
+        window.patternSystem.activeLayers && 
+        window.patternSystem.activeLayers[face] && 
+        window.patternSystem.activeLayers[face].length > 0) {
+        
+        // Apply pattern layers on top of the generated texture
+        const layers = window.patternSystem.activeLayers[face];
+        
+        // Apply each layer from bottom to top (reversed from the UI display)
+        for (let i = layers.length - 1; i >= 0; i--) {
+            const layer = layers[i];
+            const pattern = window.patternSystem.patternDatabase.patterns.find(p => p.id === layer.patternId);
+            
+            if (!pattern) continue;
+            
+            // Draw pattern with proper blending
+            ctx.save();
+            ctx.globalCompositeOperation = layer.blendMode;
+            ctx.globalAlpha = layer.opacity;
+            
+            // Load the pattern image asynchronously
+            const img = new Image();
+            img.src = `patterns/${pattern.src}`;
+            
+            // This is a bit hacky but works for immediate preview
+            // We're drawing synchronously to avoid the complexity of async texture generation
+            // In a production app, you might want to use a better approach with proper loading handling
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                // Apply color tint
+                if (layer.color && layer.color !== '#000000') {
+                    ctx.globalCompositeOperation = 'source-atop';
+                    ctx.fillStyle = layer.color;
+                    ctx.globalAlpha = 0.5; // Reduce the intensity of the tint
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+                
+                ctx.restore();
+                
+                // For immediate preview update, refresh the texture
+                if (textures[face]) {
+                    textures[face].needsUpdate = true;
+                }
+                
+                // Update face previews
+                updateFaceCanvases();
+                
+                // Update main preview if this is the front face
+                if (face === 'front') {
+                    updatePreviewTexture();
+                }
+            };
+            
+            img.onerror = () => {
+                console.error(`Failed to load pattern image: ${pattern.src}`);
+                ctx.restore();
+            };
+        }
+    }
 }
 
 function updatePreviewTexture() {
@@ -994,6 +1062,11 @@ function updateFaceCanvases() {
 }
 
 function exportTexture() {
+    // Make sure pattern layers are applied to all faces before exporting
+    if (window.patternLayerSystem && window.patternLayerSystem.applyAllLayers) {
+        window.patternLayerSystem.applyAllLayers();
+    }
+    
     // Create a texture atlas (all six faces arranged in a grid)
     const exportCanvas = document.createElement('canvas');
     exportCanvas.width = textureSize * 3;
@@ -1163,6 +1236,11 @@ function randomizeSettings() {
     if (bevelElement) bevelElement.value = randomBevel;
     if (bevelValueElement) bevelValueElement.value = randomBevel;
     
+    // Clear all pattern layers when randomizing
+    if (window.patternLayerSystem && window.patternLayerSystem.clearAllLayers) {
+        window.patternLayerSystem.clearAllLayers();
+    }
+    
     // Update textures
     updateTextures();
 }
@@ -1205,6 +1283,11 @@ function applyPreset(presetName) {
     if (depthValueElement) depthValueElement.value = preset.depth;
     if (bevelElement) bevelElement.value = preset.bevel;
     if (bevelValueElement) bevelValueElement.value = preset.bevel;
+    
+    // Clear all pattern layers when applying a preset
+    if (window.patternLayerSystem && window.patternLayerSystem.clearAllLayers) {
+        window.patternLayerSystem.clearAllLayers();
+    }
     
     // Update textures
     updateTextures();
@@ -1435,6 +1518,13 @@ function initMathControls() {
         });
     });
 }
+
+// Add pattern system script to the page
+document.addEventListener('DOMContentLoaded', function() {
+    const patternScript = document.createElement('script');
+    patternScript.src = 'pattern-layer-system.js';
+    document.head.appendChild(patternScript);
+});
 
 // Initialize the application when the page loads
 window.addEventListener('load', init);
