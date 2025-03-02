@@ -835,12 +835,10 @@ function exportAsVxb() {
                 console.warn(`Missing face texture: ${faceName}, using default color`);
             }
             
-            // Ensure each face is also quantized to stay within the palette limit
-            const imageData = ctx.getImageData(0, 0, 32, 32);
-            const quantizedData = quantizeColors(imageData, 255);
-            ctx.putImageData(quantizedData, 0, 0);
-            
+            // Store the canvas
             faceCanvases[faceName] = canvas;
+            
+            // NOTE: Removing the direct quantization call here, as color quantization will be handled by VxbConverter
         });
         
         // Create blobs for each face in the correct order
@@ -878,6 +876,7 @@ function exportAsVxb() {
         alert("Failed to export as VXB. See console for details.");
     }
 }
+
 function randomizeSettings() {
     // Get all form elements for randomization
     const materialTypeElement = document.getElementById('material-type');
