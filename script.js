@@ -12,6 +12,14 @@ if (typeof window.scene === 'undefined') {
     window.textures = {};
     window.simplex = undefined;
     window.sharedColorPalette = null;
+    window.customTextures = {
+        front: null,
+        back: null,
+        top: null,
+        bottom: null,
+        left: null,
+        right: null
+    };
 }
 
 // Material presets
@@ -513,6 +521,27 @@ function init() {
                 console.log("Loading screen hidden");
             }
         }, 1500); // Increased timeout to ensure everything is ready
+
+        initCustomTextureHandlers();
+
+        // Add preview container expand/collapse functionality
+        const previewContainer = document.querySelector('.texture-preview-container');
+        if (previewContainer) {
+            previewContainer.addEventListener('click', function(e) {
+                // Don't toggle if clicking on a button
+                if (e.target.tagName === 'BUTTON') return;
+                
+                this.classList.toggle('expanded');
+                
+                // Update preview faces when expanded
+                if (this.classList.contains('expanded')) {
+                    updateFaceCanvases();
+                }
+            });
+        }
+
+        // Initialize panel collapse functionality
+        initPanelCollapse();
     } catch (error) {
         console.error("Initialization error:", error);
         alert("There was an error initializing Magic Block. Please check the console for details.");
@@ -560,6 +589,9 @@ function createTextures() {
         textures[face].minFilter = THREE.NearestFilter;
     });
     
+    // Add this line to update the face previews
+    updateFaceCanvases();
+    
     // Also update the preview texture
     updatePreviewTexture();
 }
@@ -584,11 +616,21 @@ function updateTextures() {
         }
     });
     
+    // Add this line to update the face previews
+    updateFaceCanvases();
+    
     // Also update the preview texture
     updatePreviewTexture();
 }
 
 function generateTextureForFace(canvas, face, useSharedPalette = true) {
+    // Check for custom texture first
+    if (customTextures[face]) {
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(customTextures[face], 0, 0);
+        return;
+    }
+
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     
     // Get form values with null checks
@@ -780,6 +822,24 @@ function updatePreviewTexture() {
     }
 }
 
+function updateFaceCanvases() {
+    const faces = ['front', 'back', 'top', 'bottom', 'left', 'right'];
+    faces.forEach(face => {
+        if (!textures[face]) return;
+        
+        const faceCard = document.querySelector(`.face-card[data-face="${face}"] canvas`);
+        if (!faceCard) return;
+        
+        const ctx = faceCard.getContext('2d');
+        const sourceCanvas = textures[face].image;
+        
+        // Clear and draw the face texture
+        ctx.clearRect(0, 0, faceCard.width, faceCard.height);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(sourceCanvas, 0, 0, faceCard.width, faceCard.height);
+    });
+}
+
 function exportTexture() {
     // Create a texture atlas (all six faces arranged in a grid)
     const exportCanvas = document.createElement('canvas');
@@ -829,51 +889,42 @@ function exportTexture() {
 
 function exportAsVxb() {
     try {
-        // Check if VxbConverter is available
         if (!window.VxbConverter) {
             console.error("VXB Converter not available");
             alert("VXB Converter not available. Make sure vxb-converter.js is loaded correctly.");
             return;
         }
-        
-        // Get the texture faces
-        const faces = window.textureFaces;
-        if (!faces) {
-            console.error("Texture faces not available for export");
-            return;
-        }
-        
-        // Create new canvases for each face to ensure proper size and format
-        const faceCanvases = {};
+
+        // Get all face textures, preferring custom textures when available
+        const faces = {};
         const faceOrder = ['right', 'left', 'top', 'bottom', 'front', 'back'];
-        
-        // Create a 32x32 canvas for each face
+
         faceOrder.forEach(faceName => {
             const canvas = document.createElement('canvas');
             canvas.width = 32;
             canvas.height = 32;
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            
-            // Draw the face texture on the new canvas
-            if (faces[faceName]) {
-                ctx.drawImage(faces[faceName], 0, 0, 32, 32);
+            const ctx = canvas.getContext('2d');
+
+            if (customTextures[faceName]) {
+                // Use custom texture
+                ctx.drawImage(customTextures[faceName], 0, 0);
+            } else if (textures[faceName]) {
+                // Use generated texture
+                ctx.drawImage(textures[faceName].image, 0, 0);
             } else {
-                // Fill with a default color if face texture is missing
+                // Fallback
                 ctx.fillStyle = '#888888';
                 ctx.fillRect(0, 0, 32, 32);
                 console.warn(`Missing face texture: ${faceName}, using default color`);
             }
-            
-            // Store the canvas
-            faceCanvases[faceName] = canvas;
-            
-            // NOTE: Removing the direct quantization call here, as color quantization will be handled by VxbConverter
+
+            faces[faceName] = canvas;
         });
-        
-        // Create blobs for each face in the correct order
+
+        // Create blobs for each face
         const blobPromises = faceOrder.map(faceName => {
             return new Promise((resolve, reject) => {
-                const canvas = faceCanvases[faceName];
+                const canvas = faces[faceName];
                 canvas.toBlob(blob => {
                     if (blob) {
                         resolve(blob);
@@ -883,17 +934,11 @@ function exportAsVxb() {
                 }, 'image/png');
             });
         });
-        
-        // Process all the blobs
+
         Promise.all(blobPromises)
             .then(blobs => {
-                // Generate filename based on material type
                 const materialType = document.getElementById('material-type').value || 'block';
-                
-                // Debug information
                 console.log(`Exporting VXB with ${blobs.length} faces in order: ${faceOrder.join(', ')}`);
-                
-                // Use the VXB converter to convert and save
                 return window.VxbConverter.convertAndSaveMultipleVxb(blobs, `magic_${materialType}`);
             })
             .catch(error => {
@@ -1028,6 +1073,127 @@ function hexToRgb(hex) {
         g: parseInt(result[2], 16),
         b: parseInt(result[3], 16)
     } : { r: 0, g: 0, b: 0 };
+}
+
+function initCustomTextureHandlers() {
+    const faceCanvases = document.querySelectorAll('.face-preview');
+    const faceInputs = document.querySelectorAll('.face-input');
+    const clearButton = document.getElementById('clear-custom-textures');
+
+    // Add click handler to canvases to trigger file input
+    faceCanvases.forEach(canvas => {
+        canvas.addEventListener('click', () => {
+            const face = canvas.dataset.face;
+            const input = document.querySelector(`.face-input[data-face="${face}"]`);
+            if (input) input.click();
+        });
+    });
+
+    // Handle file selection
+    faceInputs.forEach(input => {
+        input.addEventListener('change', (e) => {
+            const face = input.dataset.face;
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Create a temporary canvas for processing
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = 32;
+                    tempCanvas.height = 32;
+                    const ctx = tempCanvas.getContext('2d');
+
+                    // Draw and resize the image
+                    ctx.drawImage(img, 0, 0, 32, 32);
+
+                    // Update preview
+                    const previewCanvas = document.querySelector(`.face-preview[data-face="${face}"]`);
+                    if (previewCanvas) {
+                        const previewCtx = previewCanvas.getContext('2d');
+                        previewCtx.clearRect(0, 0, 64, 64);
+                        previewCtx.imageSmoothingEnabled = false;
+                        previewCtx.drawImage(tempCanvas, 0, 0, 64, 64);
+                    }
+
+                    // Store the processed texture
+                    customTextures[face] = tempCanvas;
+
+                    // Update the cube face
+                    updateCubeFace(face, tempCanvas);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
+    // Clear custom textures
+    if (clearButton) {
+        clearButton.addEventListener('click', () => {
+            Object.keys(customTextures).forEach(face => {
+                customTextures[face] = null;
+                
+                // Clear preview
+                const previewCanvas = document.querySelector(`.face-preview[data-face="${face}"]`);
+                if (previewCanvas) {
+                    const ctx = previewCanvas.getContext('2d');
+                    ctx.clearRect(0, 0, 64, 64);
+                }
+                
+                // Clear file input
+                const input = document.querySelector(`.face-input[data-face="${face}"]`);
+                if (input) input.value = '';
+            });
+
+            // Regenerate cube textures
+            updateTextures();
+        });
+    }
+}
+
+function updateCubeFace(face, textureCanvas) {
+    if (textures[face]) {
+        textures[face].image = textureCanvas;
+        textures[face].needsUpdate = true;
+    }
+}
+
+function initPanelCollapse() {
+    const sections = document.querySelectorAll('.panel-section:not(.primary-actions)');
+    
+    sections.forEach(section => {
+        const heading = section.querySelector('h3');
+        const content = section.querySelector('.panel-content');
+        
+        if (heading && content) {
+            // Add aria attributes for accessibility
+            heading.setAttribute('role', 'button');
+            heading.setAttribute('aria-expanded', 'true');
+            heading.setAttribute('aria-controls', `panel-${section.id || Math.random().toString(36).substr(2, 9)}`);
+            content.setAttribute('id', heading.getAttribute('aria-controls'));
+            
+            // Add click handler
+            heading.addEventListener('click', () => {
+                const isCollapsed = section.classList.toggle('collapsed');
+                heading.setAttribute('aria-expanded', !isCollapsed);
+                
+                // Save panel state to localStorage
+                const panelId = heading.getAttribute('aria-controls');
+                localStorage.setItem(`panel-${panelId}-collapsed`, isCollapsed);
+            });
+            
+            // Restore panel state from localStorage
+            const panelId = heading.getAttribute('aria-controls');
+            const isCollapsed = localStorage.getItem(`panel-${panelId}-collapsed`) === 'true';
+            if (isCollapsed) {
+                section.classList.add('collapsed');
+                heading.setAttribute('aria-expanded', 'false');
+            }
+        }
+    });
 }
 
 // Initialize the application when the page loads

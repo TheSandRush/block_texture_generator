@@ -34,6 +34,32 @@
                 <div class="texture-preview-container">
                     <h4>Texture Preview</h4>
                     <canvas id="texture-preview" width="128" height="128"></canvas>
+                    <div class="preview-faces">
+                        <div class="face-card" data-face="front">
+                            <canvas width="128" height="128"></canvas>
+                            <span>Front</span>
+                        </div>
+                        <div class="face-card" data-face="back">
+                            <canvas width="128" height="128"></canvas>
+                            <span>Back</span>
+                        </div>
+                        <div class="face-card" data-face="top">
+                            <canvas width="128" height="128"></canvas>
+                            <span>Top</span>
+                        </div>
+                        <div class="face-card" data-face="bottom">
+                            <canvas width="128" height="128"></canvas>
+                            <span>Bottom</span>
+                        </div>
+                        <div class="face-card" data-face="left">
+                            <canvas width="128" height="128"></canvas>
+                            <span>Left</span>
+                        </div>
+                        <div class="face-card" data-face="right">
+                            <canvas width="128" height="128"></canvas>
+                            <span>Right</span>
+                        </div>
+                    </div>
                     <div class="action-buttons">
                         <button id="export-texture">Export</button>
                     </div>
@@ -157,6 +183,47 @@
                 </div>
                 
                 <div class="panel-section">
+                    <h3>Custom Face Textures</h3>
+                    <div class="panel-content">
+                        <div class="face-textures-grid">
+                            <div class="face-texture-item">
+                                <label>Front:</label>
+                                <canvas class="face-preview" data-face="front" width="64" height="64"></canvas>
+                                <input type="file" class="face-input" data-face="front" accept="image/*">
+                            </div>
+                            <div class="face-texture-item">
+                                <label>Back:</label>
+                                <canvas class="face-preview" data-face="back" width="64" height="64"></canvas>
+                                <input type="file" class="face-input" data-face="back" accept="image/*">
+                            </div>
+                            <div class="face-texture-item">
+                                <label>Top:</label>
+                                <canvas class="face-preview" data-face="top" width="64" height="64"></canvas>
+                                <input type="file" class="face-input" data-face="top" accept="image/*">
+                            </div>
+                            <div class="face-texture-item">
+                                <label>Bottom:</label>
+                                <canvas class="face-preview" data-face="bottom" width="64" height="64"></canvas>
+                                <input type="file" class="face-input" data-face="bottom" accept="image/*">
+                            </div>
+                            <div class="face-texture-item">
+                                <label>Left:</label>
+                                <canvas class="face-preview" data-face="left" width="64" height="64"></canvas>
+                                <input type="file" class="face-input" data-face="left" accept="image/*">
+                            </div>
+                            <div class="face-texture-item">
+                                <label>Right:</label>
+                                <canvas class="face-preview" data-face="right" width="64" height="64"></canvas>
+                                <input type="file" class="face-input" data-face="right" accept="image/*">
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button id="clear-custom-textures">Clear Custom Textures</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel-section">
                     <h3>Other Options</h3>
                     <div class="panel-content">
                         <div class="action-buttons">
@@ -186,18 +253,5 @@
 <script src="vxb-converter-setup.js"></script>
 <script src="script.js"></script>
 
-        // Add section collapsing functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const sections = document.querySelectorAll('.panel-section:not(.primary-actions)');
-            
-            sections.forEach(section => {
-                const heading = section.querySelector('h3');
-                
-                heading.addEventListener('click', () => {
-                    section.classList.toggle('collapsed');
-                });
-            });
-        });
-    </script>
 </body>
 </html>
