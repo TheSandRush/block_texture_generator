@@ -406,48 +406,202 @@ body {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(5px);
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    overflow-y: auto;
 }
 
 .modal-content {
-    background-color: rgba(18, 18, 18, 0.95);
-    margin: 10% auto;
-    padding: 1.5rem;
-    width: 80%;
-    max-width: 500px;
-    border-radius: 8px;
+    background: linear-gradient(145deg, rgba(25, 25, 25, 0.95) 0%, rgba(15, 15, 15, 0.95) 100%);
+    margin: 5% auto;
+    padding: 2rem;
+    width: 90%;
+    max-width: 550px;
+    border-radius: 12px;
     text-align: center;
-    border: 1px solid rgba(32, 196, 202, 0.3);
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(32, 196, 202, 0.4);
+    box-shadow: 
+        0 0 30px rgba(0, 0, 0, 0.5),
+        0 0 15px rgba(32, 196, 202, 0.2);
+    animation: modalFadeIn 0.3s ease-out;
+    transform-origin: center;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .modal-content h2 {
     color: #20c4ca;
-    font-weight: 500;
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
+    font-weight: 600;
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    display: inline-block;
+    letter-spacing: 0.5px;
+}
+
+.modal-content h2:after {
+    content: "";
+    position: absolute;
+    left: -20px;
+    right: -20px;
+    bottom: -8px;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        rgba(32, 196, 202, 0) 0%,
+        rgba(32, 196, 202, 0.7) 50%,
+        rgba(32, 196, 202, 0) 100%);
 }
 
 .close {
-    float: right;
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
     font-size: 1.5rem;
-    font-weight: bold;
+    font-weight: 300;
     cursor: pointer;
     color: #ccc;
-    transition: color 0.2s;
+    transition: all 0.2s;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
 }
 
 .close:hover {
-    color: #20c4ca;
+    color: #fff;
+    background-color: rgba(32, 196, 202, 0.2);
+    transform: rotate(90deg);
 }
 
 #download-image {
-    max-width: 100%;
-    margin: 1rem 0;
+    max-width: 90%;
+    height: auto;
+    margin: 1.5rem 0;
     image-rendering: pixelated;
-    border: 1px solid rgba(32, 196, 202, 0.3);
-    border-radius: 4px;
+    border: 1px solid rgba(32, 196, 202, 0.4);
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease;
+}
+
+#download-image:hover {
+    transform: scale(1.02);
+    border-color: rgba(32, 196, 202, 0.8);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(32, 196, 202, 0.2);
+}
+
+.modal-content p {
+    color: #ddd;
+    font-size: 1rem;
+    margin: 1rem 0;
+    font-weight: 400;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin: 1.5rem 0;
+}
+
+.export-buttons button {
+    padding: 0.8rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+    min-width: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* PNG Download Button */
+.export-buttons #download-png-button {
+    background: linear-gradient(145deg, #20c4ca 0%, #1aa4a9 100%);
+    border: none;
+    color: #111;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(32, 196, 202, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.export-buttons #download-png-button:hover {
+    background: linear-gradient(145deg, #23d8de 0%, #1bb6bb 100%);
+    box-shadow: 0 5px 15px rgba(32, 196, 202, 0.4);
+    transform: translateY(-2px);
+}
+
+.export-buttons #download-png-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(32, 196, 202, 0.3);
+}
+
+/* VXB Download Button */
+.export-buttons #download-vxb-button {
+    background: linear-gradient(145deg, rgba(40, 40, 40, 0.8) 0%, rgba(30, 30, 30, 0.8) 100%);
+    border: 1px solid rgba(32, 196, 202, 0.4);
+    color: #20c4ca;
+    font-weight: 500;
+}
+
+.export-buttons #download-vxb-button:hover {
+    background: linear-gradient(145deg, rgba(45, 45, 45, 0.8) 0%, rgba(35, 35, 35, 0.8) 100%);
+    border-color: rgba(32, 196, 202, 0.8);
+    box-shadow: 0 4px 12px rgba(32, 196, 202, 0.2);
+    transform: translateY(-2px);
+}
+
+.export-buttons #download-vxb-button:active {
+    transform: translateY(1px);
+}
+
+.export-info {
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-top: 1rem;
+    padding: 0.8rem;
+    background-color: rgba(32, 196, 202, 0.1);
+    border-radius: 6px;
+    border-left: 3px solid rgba(32, 196, 202, 0.5);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .modal-content {
+        margin: 10% auto;
+        padding: 1.5rem;
+        width: 95%;
+    }
+    
+    .export-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .export-buttons button {
+        width: 100%;
+        min-width: unset;
+        padding: 0.7rem 1rem;
+    }
+    
+    #download-image {
+        max-width: 100%;
+        margin: 1rem 0;
+    }
 }
 
 #loading-screen {
@@ -822,4 +976,26 @@ input[type="color"]::-webkit-color-swatch {
     .face-textures-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+}
+
+/* Additional styling for export modal elements */
+.texture-preview-wrapper {
+    position: relative;
+    padding: 15px;
+    background-color: rgba(15, 15, 15, 0.4);
+    border-radius: 8px;
+    margin: 0 auto;
+    max-width: 90%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.export-options {
+    margin: 1rem 0;
+}
+
+.export-options p {
+    margin-bottom: 0.8rem;
+    color: #ddd;
 }

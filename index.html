@@ -239,13 +239,24 @@
     <div class="modal-content">
         <span class="close">&times;</span>
         <h2>Texture Export</h2>
-        <img id="download-image" src="" alt="Texture Atlas">
-        <p>Choose your export format:</p>
-        <div class="export-buttons">
-            <button id="download-png-button" class="primary-btn">Download PNG</button>
-            <button id="download-vxb-button" class="primary-btn">Download VXB</button>
+        <div class="texture-preview-wrapper">
+            <img id="download-image" src="" alt="Texture Atlas">
         </div>
-        <p class="export-info">VXB format can be used in other voxel applications.</p>
+        <p>Your texture is ready for export!</p>
+        <div class="export-options">
+            <p>Choose your export format:</p>
+            <div class="export-buttons">
+                <button id="download-png-button" class="primary-btn">
+                    Download PNG
+                </button>
+                <button id="download-vxb-button">
+                    Download VXB
+                </button>
+            </div>
+        </div>
+        <div class="export-info">
+            <p>VXB format can be used in compatible voxel applications and editors.</p>
+        </div>
     </div>
 </div>
 
