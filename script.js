@@ -585,27 +585,41 @@ function exportAsVxb() {
             return;
         }
         
-        // Get the texture faces in the required order: right, back, bottom, top, front, left
+        // Get the texture faces
         const faces = window.textureFaces;
         if (!faces) {
             console.error("Texture faces not available for export");
             return;
         }
         
-        // Extract ImageData from each canvas
-        const faceOrder = ['right', 'back', 'bottom', 'top', 'front', 'left'];
-        const imageBlobs = [];
+        // Create new canvases for each face to ensure proper size and format
+        const faceCanvases = {};
+        const faceOrder = ['right', 'left', 'top', 'bottom', 'front', 'back'];
         
-        // Create blobs for each face
+        // Create a 32x32 canvas for each face
+        faceOrder.forEach(faceName => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw the face texture on the new canvas
+            if (faces[faceName]) {
+                ctx.drawImage(faces[faceName], 0, 0, 32, 32);
+            } else {
+                // Fill with a default color if face texture is missing
+                ctx.fillStyle = '#888888';
+                ctx.fillRect(0, 0, 32, 32);
+                console.warn(`Missing face texture: ${faceName}, using default color`);
+            }
+            
+            faceCanvases[faceName] = canvas;
+        });
+        
+        // Create blobs for each face in the correct order
         const blobPromises = faceOrder.map(faceName => {
             return new Promise((resolve, reject) => {
-                const canvas = faces[faceName];
-                if (!canvas) {
-                    console.error(`Missing face: ${faceName}`);
-                    reject(`Missing face: ${faceName}`);
-                    return;
-                }
-                
+                const canvas = faceCanvases[faceName];
                 canvas.toBlob(blob => {
                     if (blob) {
                         resolve(blob);
@@ -622,6 +636,9 @@ function exportAsVxb() {
                 // Generate filename based on material type
                 const materialType = document.getElementById('material-type').value || 'block';
                 
+                // Debug information
+                console.log(`Exporting VXB with ${blobs.length} faces in order: ${faceOrder.join(', ')}`);
+                
                 // Use the VXB converter to convert and save
                 return window.VxbConverter.convertAndSaveMultipleVxb(blobs, `magic_${materialType}`);
             })
@@ -634,7 +651,6 @@ function exportAsVxb() {
         alert("Failed to export as VXB. See console for details.");
     }
 }
-
 function randomizeSettings() {
     // Get all form elements for randomization
     const materialTypeElement = document.getElementById('material-type');
