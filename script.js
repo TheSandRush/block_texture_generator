@@ -400,33 +400,43 @@ function init() {
         // Add event listeners for all input controls
         const inputs = document.querySelectorAll('input, select');
         inputs.forEach(input => {
-            if (input.type === 'range') {
-                input.addEventListener('input', function() {
-                    const valueInput = document.getElementById(this.id + '-value');
+            const updateControls = () => {
+                if (input.type === 'range') {
+                    const valueInput = document.getElementById(input.id + '-value');
                     if (valueInput) {
-                        valueInput.value = this.value;
+                        valueInput.value = input.value;
                     }
-                });
+                }
                 
+                if (input.type === 'color') {
+                    const hexInput = document.getElementById(input.id + '-hex');
+                    if (hexInput) {
+                        hexInput.value = input.value;
+                    }
+                }
+                
+                // Update textures immediately
+                updateTextures();
+            };
+
+            // Add input and change event listeners
+            input.addEventListener('input', updateControls);
+            input.addEventListener('change', updateControls);
+            
+            if (input.type === 'range') {
                 const numberInput = document.getElementById(input.id + '-value');
                 if (numberInput) {
                     numberInput.addEventListener('input', function() {
                         const rangeInput = document.getElementById(input.id);
                         if (rangeInput) {
                             rangeInput.value = this.value;
+                            updateTextures();
                         }
                     });
                 }
             }
             
             if (input.type === 'color') {
-                input.addEventListener('input', function() {
-                    const hexInput = document.getElementById(this.id + '-hex');
-                    if (hexInput) {
-                        hexInput.value = this.value;
-                    }
-                });
-                
                 const hexInput = document.getElementById(input.id + '-hex');
                 if (hexInput) {
                     hexInput.addEventListener('input', function() {
@@ -434,6 +444,7 @@ function init() {
                             const colorInput = document.getElementById(input.id.replace('-hex', ''));
                             if (colorInput) {
                                 colorInput.value = this.value;
+                                updateTextures();
                             }
                         }
                     });
