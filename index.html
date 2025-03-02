@@ -97,7 +97,56 @@
                                 <option value="checker">Checker</option>
                                 <option value="striped">Striped</option>
                                 <option value="zigzag">Zig-zag</option>
+                                <option value="math">Mathematical</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel-section" id="math-patterns-section">
+                    <h3>Math Patterns</h3>
+                    <div class="panel-content">
+                        <div class="control-group">
+                            <label for="math-pattern-type">Pattern Function:</label>
+                            <select id="math-pattern-type">
+                                <option value="sine-waves">Sine Waves</option>
+                                <option value="ripples">Circular Ripples</option>
+                                <option value="voronoi">Voronoi Cells</option>
+                                <option value="mandelbrot">Mandelbrot Set</option>
+                                <option value="perlin-flow">Perlin Flow Field</option>
+                                <option value="fractal">Fractal Pattern</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="math-formula">Custom Formula (JavaScript):</label>
+                            <textarea id="math-formula" rows="3" placeholder="Math.sin(x/10) * Math.cos(y/10)"></textarea>
+                            <p class="help-text">Use x and y variables in your formula. Result should be between -1 and 1.</p>
+                        </div>
+                        
+                        <div class="control-group slider" id="math-scale-container">
+                            <label for="math-scale">Scale:</label>
+                            <div class="slider-container">
+                                <input type="range" id="math-scale" min="1" max="50" value="10">
+                                <input type="number" id="math-scale-value" min="1" max="50" value="10">
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="formula-color">Formula Shading Color:</label>
+                            <div class="color-picker-container">
+                                <input type="color" id="formula-color" value="#4a90e2">
+                                <input type="text" id="formula-color-hex" value="#4a90e2">
+                            </div>
+                        </div>
+                        
+                        <div class="presets-container math-presets">
+                            <button class="math-preset-btn" data-preset="sine-waves">Sine</button>
+                            <button class="math-preset-btn" data-preset="ripples">Ripples</button>
+                            <button class="math-preset-btn" data-preset="voronoi">Voronoi</button>
+                            <button class="math-preset-btn" data-preset="mandelbrot">Mandelbrot</button>
+                            <button class="math-preset-btn" data-preset="perlin-flow">Flow</button>
+                            <button class="math-preset-btn" data-preset="fractal">Fractal</button>
                         </div>
                     </div>
                 </div>
@@ -239,13 +288,24 @@
     <div class="modal-content">
         <span class="close">&times;</span>
         <h2>Texture Export</h2>
-        <img id="download-image" src="" alt="Texture Atlas">
-        <p>Choose your export format:</p>
-        <div class="export-buttons">
-            <button id="download-png-button" class="primary-btn">Download PNG</button>
-            <button id="download-vxb-button" class="primary-btn">Download VXB</button>
+        <div class="texture-preview-wrapper">
+            <img id="download-image" src="" alt="Texture Atlas">
         </div>
-        <p class="export-info">VXB format can be used in other voxel applications.</p>
+        <p>Your texture is ready for export!</p>
+        <div class="export-options">
+            <p>Choose your export format:</p>
+            <div class="export-buttons">
+                <button id="download-png-button" class="primary-btn">
+                    Download PNG
+                </button>
+                <button id="download-vxb-button">
+                    Download VXB
+                </button>
+            </div>
+        </div>
+        <div class="export-info">
+            <p>VXB format can be used in compatible voxel applications and editors.</p>
+        </div>
     </div>
 </div>
 
