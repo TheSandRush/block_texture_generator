@@ -498,70 +498,162 @@ input[type="color"]::-webkit-color-swatch {
     position: relative;
 }
 
-/* Mobile responsive styles */
+/* Mobile responsive styles - complete overhaul */
 @media (max-width: 768px) {
-    #canvas-container {
-        order: 1;
-        height: 45vh; /* Increased height for better visibility */
-        min-height: 280px; /* Increased minimum height */
-        width: 100%;
-        position: relative;
+    /* Main layout adjustments */
+    .main-content {
         display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    
-    #canvas-container canvas {
-        width: 100% !important;
-        height: 100% !important;
-        display: block;
-    }
-    
-    .texture-preview-container {
-        top: 10px;
-        right: 10px;
-        width: 120px; /* Slightly wider container */
-        padding: 8px;
-        box-sizing: border-box;
+        flex-direction: column;
+        height: calc(100vh - 60px); /* Account for header height */
         overflow: hidden;
     }
     
-    .texture-preview-container h4 {
-        margin-bottom: 5px;
-        font-size: 0.8rem;
-        white-space: nowrap;
+    /* Canvas container for the 3D cube */
+    #canvas-container {
+        order: 1;
+        height: 40vh;
+        min-height: 200px;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
     }
     
-    .texture-preview-container .action-buttons {
+    /* Canvas element itself */
+    #canvas-container canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+    
+    /* Controls panel */
+    .controls-panel {
+        order: 2;
         width: 100%;
+        height: 60vh;
+        max-height: 60vh;
+        overflow-y: auto;
+        border-right: none;
+        border-top: 1px solid rgba(32, 196, 202, 0.3);
+    }
+    
+    /* Texture preview */
+    .texture-preview-container {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 100px;
+        padding: 6px;
+        z-index: 10;
+    }
+    
+    .texture-preview-container h4 {
+        font-size: 0.7rem;
+        margin-bottom: 4px;
+        text-align: center;
+    }
+    
+    #texture-preview {
+        width: 100%;
+        height: auto;
+        display: block;
     }
     
     .texture-preview-container .action-buttons button {
-        font-size: 0.75rem;
-        padding: 6px 8px;
+        padding: 4px;
+        font-size: 0.7rem;
         width: 100%;
-        box-sizing: border-box;
+        margin-top: 4px;
+    }
+    
+    /* Adjust section headings */
+    .panel-section h3 {
+        font-size: 0.9rem;
+    }
+    
+    /* Primary actions section */
+    .primary-actions {
+        background-color: rgba(32, 196, 202, 0.1);
+        margin: -0.75rem;
+        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+    }
+    
+    /* Action buttons in two columns */
+    .primary-actions .action-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    
+    .primary-actions .action-buttons button {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    
+    /* Control groups */
+    .control-group {
+        margin-bottom: 12px;
+    }
+    
+    .control-group label {
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+    
+    /* Sliders */
+    .control-group.slider .slider-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .control-group.slider input[type="range"] {
+        flex: 1;
+    }
+    
+    .control-group.slider input[type="number"] {
+        width: 40px;
+        text-align: center;
+        padding: 4px;
+        font-size: 0.8rem;
+    }
+    
+    /* Three-column presets */
+    .presets-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    
+    .preset-btn {
+        padding: 8px 4px;
+        font-size: 0.8rem;
+    }
+    
+    /* Modal adjustments */
+    .modal-content {
+        width: 90%;
+        margin: 15% auto;
+        padding: 1rem;
     }
 }
 
-/* Smaller mobile devices */
-@media (max-width: 480px) {
+/* Extra small devices */
+@media (max-width: 375px) {
     #canvas-container {
-        height: 40vh;
+        height: 35vh;
+        min-height: 180px;
+    }
+    
+    .controls-panel {
+        height: 65vh;
     }
     
     .texture-preview-container {
-        width: 110px;
-        padding: 6px;
+        width: 90px;
     }
     
-    .texture-preview-container h4 {
-        font-size: 0.75rem;
-    }
-    
-    .texture-preview-container .action-buttons button {
-        font-size: 0.7rem;
-        padding: 5px;
+    .presets-container {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
