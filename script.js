@@ -1,3 +1,36 @@
+ let scene, camera, renderer, cube, textureSize = 32; let previewCanvas, previewCtx; let isRotating = true; let textures = {}; let simplex; // Material presets const prese
+pasted
+P
+there seems to be a syntax error at line 238. can you provide a clean .js again.
+
+Edit
+Looking at the JavaScript you provided, I can see there's an issue with the code structure around line 238, where the onWindowResize function appears to be defined inside another function. Let me provide a complete, cleaned-up version of the script.js file with this error fixed:
+
+
+Clean script.js File
+Click to open code
+
+
+
+Retry
+
+Claude can make mistakes. Please double-check responses.
+
+
+
+
+
+No file chosen
+
+3.7 Sonnet
+
+Choose style
+Tip:
+Long chats cause you to reach your usage limits faster.
+Start a new chat 
+
+Clean script.js File
+
 // Initialize Three.js scene
 let scene, camera, renderer, cube, textureSize = 32;
 let previewCanvas, previewCtx;
@@ -62,7 +95,7 @@ const presets = {
         depth: 20,
         bevel: 5
     },
-       brick: {
+    brick: {
         materialType: 'brick',
         baseColor: '#b73a3a',
         accentColor: '#772222',
@@ -72,6 +105,42 @@ const presets = {
         edgeDarkness: 40,     // reduced from 50
         depth: 30,            // reduced from 60
         bevel: 20             // reduced from 30
+    }
+};
+
+// Handle orientation change properly
+function handleOrientationChange() {
+    // Give the browser time to update dimensions after orientation change
+    setTimeout(function() {
+        onWindowResize();
+    }, 100);
+}
+
+// Window resize handler
+function onWindowResize() {
+    const canvasContainer = document.getElementById('canvas-container');
+    if (!canvasContainer) return;
+    
+    const containerWidth = canvasContainer.clientWidth;
+    const containerHeight = canvasContainer.clientHeight;
+    
+    // Update camera aspect ratio based on container dimensions
+    camera.aspect = containerWidth / containerHeight;
+    camera.updateProjectionMatrix();
+    
+    // Update renderer size
+    renderer.setSize(containerWidth, containerHeight);
+    
+    // Adjust camera position based on screen size
+    if (window.innerWidth <= 480) {
+        // Small mobile devices
+        camera.position.z = 2.0;
+    } else if (window.innerWidth <= 768) {
+        // Medium mobile devices
+        camera.position.z = 2.2;
+    } else {
+        // Desktops and larger devices
+        camera.position.z = 2.5;
     }
 }
 
@@ -98,9 +167,6 @@ function init() {
         const containerHeight = canvasContainer.clientHeight;
         renderer.setSize(containerWidth, containerHeight);
         canvasContainer.appendChild(renderer.domElement);
-
-        window.addEventListener('orientationchange', handleOrientationChange);
-        window.addEventListener('resize', onWindowResize);
         
         // Set up preview canvas
         previewCanvas = document.getElementById('texture-preview');
@@ -131,6 +197,7 @@ function init() {
         
         // Event listeners
         window.addEventListener('resize', onWindowResize);
+        window.addEventListener('orientationchange', handleOrientationChange);
         
         // Check if elements exist before adding event listeners
         const generateBtn = document.getElementById('generate');
@@ -208,33 +275,23 @@ function init() {
                     modal.style.display = 'none';
                 };
             }
-    // Trigger resize handler once to set proper dimensions
-function onWindowResize() {
-    const canvasContainer = document.getElementById('canvas-container');
-    if (!canvasContainer) return;
-    
-    const containerWidth = canvasContainer.clientWidth;
-    const containerHeight = canvasContainer.clientHeight;
-    
-    // Update camera aspect ratio based on container dimensions
-    camera.aspect = containerWidth / containerHeight;
-    camera.updateProjectionMatrix();
-    
-    // Update renderer size
-    renderer.setSize(containerWidth, containerHeight);
-    
-    // Adjust camera position based on screen size
-    if (window.innerWidth <= 480) {
-        // Small mobile devices
-        camera.position.z = 2.0;
-    } else if (window.innerWidth <= 768) {
-        // Medium mobile devices
-        camera.position.z = 2.2;
-    } else {
-        // Desktops and larger devices
-        camera.position.z = 2.5;
-    }
-}
+            
+            window.onclick = function(event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            };
+            
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', function() {
+                    const link = document.createElement('a');
+                    link.download = 'magic-block-texture.png';
+                    const downloadImg = document.getElementById('download-image');
+                    if (downloadImg) {
+                        link.href = downloadImg.src;
+                        link.click();
+                    }
+                });
             }
         }
         console.log("Modal setup complete");
@@ -242,6 +299,9 @@ function onWindowResize() {
         // Start animation
         animate();
         console.log("Animation started");
+        
+        // Call resize handler once to set proper dimensions
+        onWindowResize();
         
         // Hide loading screen
         setTimeout(() => {
@@ -262,30 +322,6 @@ function toggleRotation() {
     const rotationToggleBtn = document.getElementById('rotation-toggle');
     if (rotationToggleBtn) {
         rotationToggleBtn.textContent = isRotating ? 'Pause Rotation' : 'Resume Rotation';
-    }
-}
-
-function onWindowResize() {
-    const canvasContainer = document.getElementById('canvas-container');
-    if (!canvasContainer) return;
-    
-    const containerWidth = canvasContainer.clientWidth;
-    const containerHeight = canvasContainer.clientHeight;
-    
-    // Set aspect ratio based on the container dimensions
-    camera.aspect = containerWidth / containerHeight;
-    camera.updateProjectionMatrix();
-    
-    // Update renderer size to match container
-    renderer.setSize(containerWidth, containerHeight);
-    
-    // Set camera position based on device
-    if (window.innerWidth <= 768) {
-        // Move camera slightly closer on mobile for a larger block
-        camera.position.z = 2.2;
-    } else {
-        // Default distance for desktop
-        camera.position.z = 2.5;
     }
 }
 
@@ -424,9 +460,9 @@ function generateTextureForFace(canvas, face) {
                     const offsetX = (Math.floor(y / brickH) % 2) * Math.floor(brickW / 2);
                     const brickX = (x + offsetX) % brickW;
                     const brickY = y % brickH;
-                        // Cleaner mortar lines with consistent width
+                    // Cleaner mortar lines with consistent width
                     const isMortar = brickX < mortarSize || brickY < mortarSize;
-                        // No noise in the mortar or brick faces
+                    // No noise in the mortar or brick faces
                     materialNoise = isMortar ? 0.1 : 0.9;
                     break;
                 case 'sand':
