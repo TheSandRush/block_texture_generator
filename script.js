@@ -1,3 +1,6 @@
+// Add this at the top of your script.js file
+import { imageFilesToVxb, saveVxbFile } from './vxb-converter.js';
+
 // Initialize Three.js scene
 let scene, camera, renderer, cube, textureSize = 32;
 let previewCanvas, previewCtx;
@@ -249,14 +252,41 @@ function init() {
                 }
             };
             
-            if (downloadBtn) {
-                downloadBtn.addEventListener('click', function() {
-                    const link = document.createElement('a');
-                    link.download = 'magic-block-texture.png';
-                    const downloadImg = document.getElementById('download-image');
-                    if (downloadImg) {
-                        link.href = downloadImg.src;
-                        link.click();
+            // Modal setup
+const modal = document.getElementById('export-modal');
+if (modal) {
+    const closeBtns = document.getElementsByClassName('close');
+    const pngDownloadBtn = document.getElementById('download-png-button');
+    const vxbDownloadBtn = document.getElementById('download-vxb-button');
+    
+    if (closeBtns.length > 0) {
+        closeBtns[0].onclick = function() {
+            modal.style.display = 'none';
+        };
+    }
+    
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    };
+    
+    if (pngDownloadBtn) {
+        pngDownloadBtn.addEventListener('click', function() {
+            const link = document.createElement('a');
+            link.download = 'magic-block-texture.png';
+            const downloadImg = document.getElementById('download-image');
+            if (downloadImg) {
+                link.href = downloadImg.src;
+                link.click();
+            }
+        });
+    }
+    
+    if (vxbDownloadBtn) {
+        vxbDownloadBtn.addEventListener('click', exportAsVxb);
+    }
+}
                     }
                 });
             }
@@ -554,10 +584,61 @@ function exportTexture() {
         downloadImg.src = exportCanvas.toDataURL('image/png');
     }
     
+    // Store the textures for VXB export
+    window.textureFaces = {
+        right: textures.right.image,
+        back: textures.back.image,
+        bottom: textures.bottom.image,
+        top: textures.top.image,
+        front: textures.front.image,
+        left: textures.left.image
+    };
+    
     // Show the modal
     const modal = document.getElementById('export-modal');
     if (modal) {
         modal.style.display = 'block';
+    }
+}
+
+async function exportAsVxb() {
+    try {
+        // Get the texture faces in the required order: right, back, bottom, top, front, left
+        const faces = window.textureFaces;
+        if (!faces) {
+            console.error("Texture faces not available for export");
+            return;
+        }
+        
+        // Extract ImageData from each canvas
+        const faceOrder = ['right', 'back', 'bottom', 'top', 'front', 'left'];
+        const imagesData = faceOrder.map(faceName => {
+            const canvas = faces[faceName];
+            if (!canvas) {
+                console.error(`Missing face: ${faceName}`);
+                return null;
+            }
+            return canvas.getContext('2d').getImageData(0, 0, textureSize, textureSize);
+        });
+        
+        // Ensure we have all faces
+        if (imagesData.some(img => img === null)) {
+            alert("Error: Some texture faces are missing. Unable to export as VXB.");
+            return;
+        }
+        
+        // Convert to VXB format
+        const vxbBuffer = await convertImagesToVxb(imagesData);
+        
+        // Generate filename based on material type
+        const materialType = document.getElementById('material-type').value || 'block';
+        
+        // Save the file
+        saveVxbFile(vxbBuffer, `magic_${materialType}`);
+        
+    } catch (error) {
+        console.error("Error exporting as VXB:", error);
+        alert("Failed to export as VXB. See console for details.");
     }
 }
 
@@ -683,6 +764,28 @@ function hexToRgb(hex) {
         g: parseInt(result[2], 16),
         b: parseInt(result[3], 16)
     } : { r: 0, g: 0, b: 0 };
+}
+
+// This is a simplified version for importing without module dependencies
+async function convertImagesToVxb(imagesData) {
+    // This function would typically call the full implementation from vxb-converter.js
+    // For this integration, we'll just call the imported function
+    return await imageFilesToVxb(
+        // Convert ImageData to Blobs
+        await Promise.all(imagesData.map(async imageData => {
+            const canvas = document.createElement('canvas');
+            canvas.width = imageData.width;
+            canvas.height = imageData.height;
+            const ctx = canvas.getContext('2d');
+            ctx.putImageData(imageData, 0, 0);
+            
+            return new Promise(resolve => {
+                canvas.toBlob(blob => {
+                    resolve(blob);
+                }, 'image/png');
+            });
+        }))
+    );
 }
 
 // Initialize the application when the page loads
