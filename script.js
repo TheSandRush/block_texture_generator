@@ -62,17 +62,18 @@ const presets = {
         depth: 20,
         bevel: 5
     },
-    brick: {
+       brick: {
         materialType: 'brick',
         baseColor: '#b73a3a',
         accentColor: '#772222',
-        noiseScale: 2,
-        noiseStrength: 20,
-        patternType: 'cracked',
-        edgeDarkness: 50,
-        depth: 60,
-        bevel: 30
+        noiseScale: 2,        // reduced to make pattern cleaner
+        noiseStrength: 15,    // reduced from 20 to make it less noisy
+        patternType: 'checker', // changed from 'cracked' to 'checker' for cleaner brick pattern
+        edgeDarkness: 40,     // reduced from 50
+        depth: 30,            // reduced from 60
+        bevel: 20             // reduced from 30
     }
+}
 };
 
 function init() {
@@ -391,12 +392,15 @@ function generateTextureForFace(canvas, face) {
                     materialNoise = (simplex.noise2D((x + 400) / (noiseScale * 2), (y + 400) / (noiseScale * 2)) + 1) / 2;
                     break;
                 case 'brick':
-                    const brickW = Math.floor(textureSize / 4);
+                    const brickW = Math.floor(textureSize / 3);  // Larger bricks (was 4)
                     const brickH = Math.floor(textureSize / 2);
+                    const mortarSize = 1;  // Fixed mortar size
                     const offsetX = (Math.floor(y / brickH) % 2) * Math.floor(brickW / 2);
                     const brickX = (x + offsetX) % brickW;
                     const brickY = y % brickH;
-                    const isMortar = brickX < 1 || brickY < 1;
+                        // Cleaner mortar lines with consistent width
+                    const isMortar = brickX < mortarSize || brickY < mortarSize;
+                        // No noise in the mortar or brick faces
                     materialNoise = isMortar ? 0.1 : 0.9;
                     break;
                 case 'sand':
