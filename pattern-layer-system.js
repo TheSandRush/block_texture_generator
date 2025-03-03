@@ -6,6 +6,11 @@
  * that integrates with the existing texture generation pipeline.
  */
 
+// At the beginning of pattern-layer-system.js, add:
+if (typeof window.patternSystemPresets === 'undefined') {
+    window.patternSystemPresets = {}; // Use a different variable name
+}
+
 // Global state for the pattern system
 window.patternSystem = {
     activeLayers: {
