@@ -52,33 +52,20 @@ function initPatternLayerSystem() {
 
 /**
  * Load the pattern database
- * This could be loaded from a JSON file in production
  */
 async function loadPatternDatabase() {
-    // For now, we'll use the expanded pattern database directly
-    // In production, you might want to load this from a JSON file
     try {
-        // Check if we already have the database module imported
-        if (typeof patternDatabase !== 'undefined') {
-            window.patternSystem.patternDatabase = patternDatabase;
+        // Check if we already have the database loaded
+        if (window.patternDatabase && window.patternDatabase.patterns) {
+            window.patternSystem.patternDatabase = {};
+            // Convert array to object with id as key
+            window.patternDatabase.patterns.forEach(pattern => {
+                window.patternSystem.patternDatabase[pattern.id] = pattern;
+            });
             return Promise.resolve();
+        } else {
+            return Promise.reject(new Error('Pattern database not found'));
         }
-        
-        // Create script element to load the pattern database
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'pattern-database.js';
-            script.onload = () => {
-                if (typeof patternDatabase !== 'undefined') {
-                    window.patternSystem.patternDatabase = patternDatabase;
-                    resolve();
-                } else {
-                    reject(new Error('Pattern database loaded but not defined'));
-                }
-            };
-            script.onerror = () => reject(new Error('Failed to load pattern database'));
-            document.head.appendChild(script);
-        });
     } catch (error) {
         console.error('Error loading pattern database:', error);
         throw error;
@@ -89,9 +76,6 @@ async function loadPatternDatabase() {
  * Create the pattern sidebar UI
  */
 function createPatternSidebar() {
-    // Add debugging statements right at the beginning of this function
-    console.log("Creating pattern sidebar...");
-    console.log("Pattern database loaded:", window.patternSystem.patternDatabase);
     // Create the sidebar container
     const patternSidebar = document.createElement('div');
     patternSidebar.className = 'pattern-sidebar';
@@ -133,24 +117,24 @@ function createPatternSidebar() {
         </div>
     `;
     
-    // Insert the sidebar into the DOM
-    const controlsPanel = document.querySelector('.controls-panel');
-    const mainContent = document.querySelector('.main-content');
+    // Add CSS styles first
+    addPatternStyles();
     
-    if (mainContent && controlsPanel) {
-        mainContent.insertBefore(patternSidebar, controlsPanel);
+    // Insert the sidebar into the DOM
+    const mainContent = document.querySelector('.main-content');
+    const canvasContainer = document.getElementById('canvas-container');
+    
+    if (mainContent && canvasContainer) {
+        mainContent.insertBefore(patternSidebar, canvasContainer);
         
         // Add CSS class to main content to accommodate the new sidebar
         mainContent.classList.add('with-pattern-sidebar');
+        
+        // Initialize the pattern grid
+        populatePatternGrid();
     } else {
-        console.error('Could not find main-content or controls-panel elements');
+        console.error('Could not find main-content or canvas-container elements');
     }
-    
-    // Populate pattern grid
-    populatePatternGrid();
-    
-    // Add CSS for the pattern sidebar
-    addPatternStyles();
 }
 
 /**
@@ -159,450 +143,455 @@ function createPatternSidebar() {
 function addPatternStyles() {
     const styleElement = document.createElement('style');
     styleElement.textContent = `
-        /* Pattern Sidebar Styles */
-        .main-content.with-pattern-sidebar {
-            display: grid;
-            grid-template-columns: 260px 1fr 260px;
+        /* Pattern System Layout */
+        .main-content {
+            display: grid !important;
+            grid-template-columns: 260px 1fr 260px !important;
+            gap: 1rem;
+            height: 100%;
             overflow: hidden;
+            padding: 1rem;
         }
         
+        #canvas-container {
+            grid-column: 2;
+            position: relative;
+            height: 100%;
+            min-height: 400px;
+        }
+        
+        .controls-panel {
+            grid-column: 3;
+            height: 100%;
+            overflow-y: auto;
+        }
+        
+        /* Pattern Sidebar Styles */
         .pattern-sidebar {
+            grid-column: 1;
             width: 260px;
             min-width: 260px;
             background-color: rgba(18, 18, 18, 0.95);
-            padding: 0.75rem;
+            padding: 1rem;
             overflow-y: auto;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
-            border-left: 1px solid rgba(32, 196, 202, 0.3);
+            border-right: 1px solid rgba(32, 196, 202, 0.3);
             height: 100%;
             display: flex;
             flex-direction: column;
-        }
-        
-        .pattern-sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .pattern-sidebar::-webkit-scrollbar-track {
-            background: rgba(18, 18, 18, 0.95);
-        }
-        
-        .pattern-sidebar::-webkit-scrollbar-thumb {
-            background: rgba(32, 196, 202, 0.3);
-            border-radius: 3px;
-        }
-        
-        .pattern-sidebar::-webkit-scrollbar-thumb:hover {
-            background: rgba(32, 196, 202, 0.5);
+            gap: 1rem;
         }
         
         .pattern-header {
-            margin-bottom: 0.75rem;
-            padding-bottom: 0.5rem;
             border-bottom: 1px solid rgba(32, 196, 202, 0.3);
+            padding-bottom: 1rem;
         }
         
         .pattern-header h3 {
-            color: #20c4ca;
-            font-weight: 500;
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
+            color: rgb(32, 196, 202);
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
         }
         
         .face-selector {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-        
-        .face-selector label {
-            color: #aaa;
-            font-size: 0.8rem;
         }
         
         .face-selector select {
-            flex: 1;
-            padding: 0.4rem;
-            background-color: rgba(30, 30, 30, 0.8);
+            width: 100%;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(32, 196, 202, 0.3);
             border-radius: 4px;
             color: white;
-            font-size: 0.85rem;
         }
         
         .pattern-search {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            margin-bottom: 0.75rem;
         }
         
         .pattern-search input,
         .pattern-search select {
-            padding: 0.4rem;
-            background-color: rgba(30, 30, 30, 0.8);
+            width: 100%;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(32, 196, 202, 0.3);
             border-radius: 4px;
             color: white;
-            font-size: 0.85rem;
         }
         
         .pattern-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(32, 196, 202, 0.3);
+            border-radius: 4px;
+            min-height: 200px;
+            max-height: 400px;
             overflow-y: auto;
-            flex: 1;
-            max-height: 300px;
-            padding-right: 0.25rem;
-            margin-bottom: 0.75rem;
-            border-bottom: 1px solid rgba(32, 196, 202, 0.15);
-            padding-bottom: 0.75rem;
-        }
-        
-        .pattern-grid::-webkit-scrollbar {
-            width: 4px;
-        }
-        
-        .pattern-grid::-webkit-scrollbar-track {
-            background: rgba(18, 18, 18, 0.95);
-        }
-        
-        .pattern-grid::-webkit-scrollbar-thumb {
-            background: rgba(32, 196, 202, 0.3);
-            border-radius: 2px;
         }
         
         .pattern-item {
-            aspect-ratio: 1;
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%;
             border: 1px solid rgba(32, 196, 202, 0.3);
             border-radius: 4px;
             overflow: hidden;
             cursor: pointer;
-            transition: transform 0.15s, border-color 0.15s;
-            position: relative;
-            background-color: rgba(10, 10, 10, 0.4);
+            transition: all 0.2s ease;
+            background: rgba(0, 0, 0, 0.2);
         }
         
         .pattern-item:hover {
-            transform: scale(1.05);
             border-color: rgba(32, 196, 202, 0.8);
+            transform: translateY(-2px);
+        }
+        
+        .pattern-item.selected {
+            border-color: rgba(32, 196, 202, 1);
+            box-shadow: 0 0 10px rgba(32, 196, 202, 0.5);
         }
         
         .pattern-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            image-rendering: pixelated;
-        }
-        
-        .pattern-item-tooltip {
             position: absolute;
-            bottom: -2.5rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(18, 18, 18, 0.95);
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            white-space: nowrap;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.15s;
-            z-index: 10;
-            border: 1px solid rgba(32, 196, 202, 0.3);
-        }
-        
-        .pattern-item:hover .pattern-item-tooltip {
-            opacity: 1;
-        }
-        
-        .active-layers {
-            margin-top: 0.75rem;
-        }
-        
-        .active-layers h4 {
-            color: #20c4ca;
-            font-weight: 500;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .layer-list {
-            max-height: 200px;
-            overflow-y: auto;
-            margin-bottom: 0.75rem;
-        }
-        
-        .layer-item {
-            display: flex;
-            align-items: center;
-            padding: 0.4rem;
-            margin-bottom: 0.25rem;
-            background-color: rgba(30, 30, 30, 0.6);
-            border: 1px solid rgba(32, 196, 202, 0.3);
-            border-radius: 4px;
-            position: relative;
-        }
-        
-        .layer-item-preview {
-            width: 32px;
-            height: 32px;
-            border-radius: 2px;
-            overflow: hidden;
-            margin-right: 0.5rem;
-            flex-shrink: 0;
-            background-color: rgba(10, 10, 10, 0.4);
-        }
-        
-        .layer-item-preview img {
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
-            image-rendering: pixelated;
         }
         
-        .layer-item-info {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .layer-item-name {
-            font-size: 0.8rem;
+        .pattern-item span {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 4px;
+            background: rgba(0, 0, 0, 0.7);
             color: white;
-            margin-bottom: 0.15rem;
+            font-size: 10px;
+            text-align: center;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         
-        .layer-item-controls {
+        .active-layers {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 0.5rem;
         }
         
-        .layer-item-opacity {
+        .active-layers h4 {
+            color: rgb(32, 196, 202);
+            margin: 0;
+            font-size: 1rem;
+        }
+        
+        .layer-list {
+            min-height: 100px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(32, 196, 202, 0.3);
+            border-radius: 4px;
+            padding: 0.5rem;
+        }
+        
+        .layer-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(32, 196, 202, 0.3);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .layer-handle {
+            cursor: move;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .layer-handle:hover {
+            background-color: rgba(32, 196, 202, 0.2);
+        }
+        
+        .layer-handle svg {
+            display: block;
+        }
+        
+        .layer-preview {
+            width: 32px;
+            height: 32px;
+            flex-shrink: 0;
+            border-radius: 4px;
+            background-size: cover;
+            background-position: center;
+            border: 1px solid rgba(32, 196, 202, 0.3);
+        }
+        
+        .layer-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .layer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+        
+        .layer-name {
+            font-size: 12px;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .remove-layer {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            padding: 3px;
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.5);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .remove-layer:hover {
+            background: rgba(255, 0, 0, 0.2);
+            color: rgba(255, 0, 0, 0.8);
+        }
+        
+        .layer-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .layer-opacity {
             flex: 1;
             height: 4px;
             -webkit-appearance: none;
+            background: rgba(32, 196, 202, 0.3);
+            border-radius: 2px;
+        }
+        
+        .layer-opacity::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgb(32, 196, 202);
+            cursor: pointer;
+        }
+        
+        .blend-mode-select {
+            padding: 2px 4px;
+            font-size: 11px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(32, 196, 202, 0.3);
+            border-radius: 3px;
+            color: white;
+        }
+        
+        /* Layer drag states */
+        .layer-item-ghost {
+            opacity: 0.5;
+            background: rgba(32, 196, 202, 0.1);
+        }
+        
+        .layer-item-chosen {
             background: rgba(32, 196, 202, 0.2);
-            border-radius: 2px;
-            outline: none;
         }
         
-        .layer-item-opacity::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #20c4ca;
-            cursor: pointer;
-            border: 1px solid rgba(18, 18, 18, 0.95);
+        .layer-item-drag {
+            opacity: 0.8;
         }
         
-        .layer-item-color {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            border: none;
-            border-radius: 2px;
-            cursor: pointer;
-            box-shadow: 0 0 0 1px rgba(32, 196, 202, 0.3);
-        }
-        
-        .layer-item-color::-webkit-color-swatch-wrapper {
-            padding: 0;
-        }
-        
-        .layer-item-color::-webkit-color-swatch {
-            border: none;
-            border-radius: 2px;
-        }
-        
-        .layer-item-blend {
-            padding: 0.15rem 0.25rem;
-            font-size: 0.7rem;
-            background-color: rgba(30, 30, 30, 0.8);
-            border: 1px solid rgba(32, 196, 202, 0.3);
-            border-radius: 2px;
-            color: white;
-        }
-        
-        .layer-item-delete {
-            width: 18px;
-            height: 18px;
+        /* Loading and Error States */
+        .pattern-item.loading::after,
+        .pattern-item.error::after,
+        .pattern-item.no-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
             display: flex;
-            justify-content: center;
             align-items: center;
-            background-color: rgba(255, 59, 59, 0.2);
-            border: 1px solid rgba(255, 59, 59, 0.5);
-            border-radius: 50%;
-            color: #ff5e5e;
-            cursor: pointer;
-            font-size: 0.7rem;
-            transition: all 0.2s;
-        }
-        
-        .layer-item-delete:hover {
-            background-color: rgba(255, 59, 59, 0.4);
-        }
-        
-        .layer-item-move {
-            cursor: grab;
-            width: 18px;
-            height: 18px;
-            display: flex;
             justify-content: center;
-            align-items: center;
-            background-color: rgba(32, 196, 202, 0.1);
-            border: 1px solid rgba(32, 196, 202, 0.3);
-            border-radius: 50%;
-            color: #20c4ca;
-            font-size: 0.7rem;
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.7);
         }
         
-        .layer-actions {
-            display: flex;
-            gap: 0.5rem;
+        .pattern-item.loading::after {
+            content: '⌛';
         }
         
-        .layer-actions button {
-            flex: 1;
-            padding: 0.5rem;
-            border: 1px solid rgba(32, 196, 202, 0.3);
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-            background-color: rgba(30, 30, 30, 0.6);
-            color: white;
-            font-weight: 500;
-            font-size: 0.85rem;
+        .pattern-item.error::after {
+            content: '⚠️';
         }
         
-        .layer-actions button:hover {
-            background-color: rgba(32, 196, 202, 0.2);
-            border-color: #20c4ca;
-        }
-        
-        .layer-actions .primary-btn {
-            background-color: #20c4ca;
-            border-color: #20c4ca;
-            color: #111;
-            font-weight: 600;
-        }
-        
-        .layer-actions .primary-btn:hover {
-            background-color: #23d8de;
-            border-color: #23d8de;
-        }
-        
-        /* Mobile responsiveness */
-        @media (max-width: 1200px) {
-            .main-content.with-pattern-sidebar {
-                grid-template-columns: 1fr;
-            }
-            
-            .pattern-sidebar {
-                display: none;
-                position: fixed;
-                right: 0;
-                top: 0;
-                bottom: 0;
-                z-index: 100;
-                height: 100vh;
-            }
-            
-            .show-pattern-sidebar .pattern-sidebar {
-                display: block;
-            }
-            
-            .pattern-sidebar-toggle {
-                display: block;
-                position: fixed;
-                right: 10px;
-                bottom: 10px;
-                width: 50px;
-                height: 50px;
-                border-radius: 50%;
-                background-color: #20c4ca;
-                color: #111;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                font-size: 1.5rem;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-                z-index: 101;
-                cursor: pointer;
-            }
+        .pattern-item.no-image::after {
+            content: '🖼️';
         }
     `;
-    
     document.head.appendChild(styleElement);
+}
+
+/**
+ * Create a placeholder canvas with a default pattern
+ * @returns {string} Data URL of the placeholder canvas
+ */
+function createPlaceholderCanvas() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    
+    // Fill with a light gray background
+    ctx.fillStyle = '#e0e0e0';
+    ctx.fillRect(0, 0, 64, 64);
+    
+    // Draw a simple pattern
+    ctx.strokeStyle = '#999999';
+    ctx.lineWidth = 2;
+    
+    // Draw diagonal lines
+    for (let i = -64; i < 64; i += 16) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i + 64, 64);
+        ctx.stroke();
+    }
+    
+    return canvas.toDataURL();
 }
 
 /**
  * Populate the pattern grid with items from the database
  */
 function populatePatternGrid(category = 'all', searchTerm = '') {
-    const patternGrid = document.getElementById('pattern-grid');
-    if (!patternGrid) return;
+    const grid = document.getElementById('pattern-grid');
+    if (!grid) return;
     
-    // Clear the grid
-    patternGrid.innerHTML = '';
+    grid.innerHTML = '';
     
-    // Get patterns from the database
-    const database = window.patternSystem.patternDatabase;
-    if (!database || !database.patterns) {
-        console.error('Pattern database not loaded properly');
+    const patterns = window.patternDatabase ? window.patternDatabase.patterns : [];
+    if (!patterns || !patterns.length) {
+        console.error('No patterns found in database');
         return;
     }
     
-    // Filter patterns based on category and search term
-    let filteredPatterns = database.patterns;
-    
-    if (category !== 'all') {
-        filteredPatterns = filteredPatterns.filter(pattern => pattern.category === category);
-    }
-    
-    if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        filteredPatterns = filteredPatterns.filter(pattern => 
-            pattern.name.toLowerCase().includes(term) ||
-            pattern.tags.some(tag => tag.toLowerCase().includes(term))
-        );
-    }
-    
-    // Create pattern items
-    filteredPatterns.forEach(pattern => {
-        const patternItem = document.createElement('div');
-        patternItem.className = 'pattern-item';
-        patternItem.dataset.id = pattern.id;
+    patterns.forEach(pattern => {
+        // Filter by category if specified
+        if (category !== 'all' && pattern.category !== category) return;
         
-        // Create the image element with a placeholder
-        const img = document.createElement('img');
-        img.src = `patterns/${pattern.src}`;
+        // Filter by search term if specified
+        if (searchTerm && !pattern.name.toLowerCase().includes(searchTerm.toLowerCase())) return;
+        
+        const item = document.createElement('div');
+        item.className = 'pattern-item';
+        item.setAttribute('data-pattern-id', pattern.id);
+        
+        const img = new Image();
         img.alt = pattern.name;
-        img.onerror = () => {
-            img.src = 'placeholder.png';
-            console.warn(`Failed to load pattern image: ${pattern.src}`);
-        };
+        img.title = pattern.name;
         
-        // Create tooltip
-        const tooltip = document.createElement('div');
-        tooltip.className = 'pattern-item-tooltip';
-        tooltip.textContent = pattern.name;
+        // Create a loading placeholder
+        const loadingPlaceholder = createPlaceholderCanvas();
+        img.src = loadingPlaceholder;
         
-        patternItem.appendChild(img);
-        patternItem.appendChild(tooltip);
-        patternGrid.appendChild(patternItem);
+        // Only try to load the actual image if we have a source
+        if (pattern.src) {
+            const actualImage = new Image();
+            actualImage.onload = () => {
+                img.src = actualImage.src;
+                item.classList.remove('loading');
+            };
+            actualImage.onerror = () => {
+                // Keep the placeholder on error
+                item.classList.add('error');
+                console.warn(`Pattern image not found: ${pattern.name}`);
+            };
+            actualImage.src = pattern.src.startsWith('http') ? pattern.src : `patterns/${pattern.src}`;
+        } else {
+            item.classList.add('no-image');
+        }
+        
+        const label = document.createElement('span');
+        label.textContent = pattern.name;
+        
+        item.appendChild(img);
+        item.appendChild(label);
+        grid.appendChild(item);
+        
+        // Add click handler
+        item.addEventListener('click', () => {
+            addPatternLayer(pattern.id);
+            item.classList.add('selected');
+            setTimeout(() => item.classList.remove('selected'), 200);
+        });
     });
+}
+
+/**
+ * Add pattern to the active layers
+ * @param {string} patternId - ID of the pattern to add
+ */
+function addPatternLayer(patternId) {
+    const pattern = window.patternSystem.patternDatabase[patternId];
+    if (!pattern) return;
     
-    // Update layer list
+    const face = window.patternSystem.selectedFace;
+    const layerId = `${patternId}-${Date.now()}`;
+    
+    // Create a new layer with default settings
+    const newLayer = {
+        id: layerId,
+        patternId: patternId,
+        name: pattern.name,
+        opacity: 1,
+        blendMode: 'normal',
+        scale: 1,
+        rotation: 0,
+        offset: { x: 0, y: 0 }
+    };
+    
+    // Add the layer to the active layers for the current face
+    window.patternSystem.activeLayers[face].push(newLayer);
+    
+    // Update the layer list UI
     updateLayerList();
+    
+    // Apply the updated layers
+    applyPatternLayers();
 }
 
 /**
@@ -612,198 +601,169 @@ function updateLayerList() {
     const layerList = document.getElementById('layer-list');
     if (!layerList) return;
     
-    // Clear the list
-    layerList.innerHTML = '';
-    
-    // Get layers for the selected face
     const face = window.patternSystem.selectedFace;
     const layers = window.patternSystem.activeLayers[face];
     
-    if (layers.length === 0) {
-        layerList.innerHTML = '<div class="empty-layer-message">No layers added. Click patterns to add them.</div>';
-        return;
-    }
+    layerList.innerHTML = '';
     
-    // Create layer items
     layers.forEach((layer, index) => {
-        const layerItem = document.createElement('div');
-        layerItem.className = 'layer-item';
-        layerItem.dataset.index = index;
+        const item = document.createElement('div');
+        item.className = 'layer-item';
+        item.setAttribute('data-layer-id', layer.id);
         
-        // Get pattern details
-        const pattern = window.patternSystem.patternDatabase.patterns.find(p => p.id === layer.patternId);
-        if (!pattern) return;
-        
-        layerItem.innerHTML = `
-            <div class="layer-item-preview">
-                <img src="patterns/${pattern.src}" alt="${pattern.name}">
-            </div>
-            <div class="layer-item-info">
-                <div class="layer-item-name">${pattern.name}</div>
-                <div class="layer-item-controls">
-                    <input type="range" class="layer-item-opacity" value="${layer.opacity * 100}" min="0" max="100" title="Opacity">
-                    <input type="color" class="layer-item-color" value="${layer.color}" title="Color">
-                    <select class="layer-item-blend" title="Blend Mode">
-                        <option value="normal" ${layer.blendMode === 'normal' ? 'selected' : ''}>Normal</option>
-                        <option value="multiply" ${layer.blendMode === 'multiply' ? 'selected' : ''}>Multiply</option>
-                        <option value="screen" ${layer.blendMode === 'screen' ? 'selected' : ''}>Screen</option>
-                        <option value="overlay" ${layer.blendMode === 'overlay' ? 'selected' : ''}>Overlay</option>
-                    </select>
-                </div>
-            </div>
-            <div class="layer-item-move" title="Drag to reorder">⋮</div>
-            <div class="layer-item-delete" title="Remove layer">×</div>
+        const handle = document.createElement('div');
+        handle.className = 'layer-handle';
+        handle.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 12 12">
+                <circle cx="3" cy="3" r="1.5" fill="rgba(32, 196, 202, 0.5)"/>
+                <circle cx="9" cy="3" r="1.5" fill="rgba(32, 196, 202, 0.5)"/>
+                <circle cx="3" cy="9" r="1.5" fill="rgba(32, 196, 202, 0.5)"/>
+                <circle cx="9" cy="9" r="1.5" fill="rgba(32, 196, 202, 0.5)"/>
+            </svg>
         `;
         
-        layerList.appendChild(layerItem);
-    });
-    
-    // Add event listeners to layer controls
-    addLayerControlEventListeners();
-}
-
-/**
- * Add event listeners to layer control elements
- */
-function addLayerControlEventListeners() {
-    // Opacity sliders
-    document.querySelectorAll('.layer-item-opacity').forEach(slider => {
-        slider.addEventListener('input', function() {
-            const layerItem = this.closest('.layer-item');
-            const index = parseInt(layerItem.dataset.index);
-            const face = window.patternSystem.selectedFace;
-            
-            window.patternSystem.activeLayers[face][index].opacity = this.value / 100;
+        const preview = document.createElement('div');
+        preview.className = 'layer-preview';
+        
+        const pattern = window.patternSystem.patternDatabase[layer.patternId];
+        if (pattern && pattern.src) {
+            const img = new Image();
+            img.onload = () => preview.style.backgroundImage = `url(${img.src})`;
+            img.onerror = () => {
+                preview.style.backgroundImage = `url(${createPlaceholderCanvas()})`;
+            };
+            img.src = pattern.src.startsWith('http') ? pattern.src : `patterns/${pattern.src}`;
+        } else {
+            preview.style.backgroundImage = `url(${createPlaceholderCanvas()})`;
+        }
+        
+        const info = document.createElement('div');
+        info.className = 'layer-info';
+        info.innerHTML = `
+            <div class="layer-header">
+                <span class="layer-name">${layer.name}</span>
+                <button class="remove-layer" title="Remove Layer">
+                    <svg width="14" height="14" viewBox="0 0 14 14">
+                        <line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="layer-controls">
+                <input type="range" class="layer-opacity" value="${layer.opacity * 100}" min="0" max="100"
+                    title="Opacity: ${Math.round(layer.opacity * 100)}%">
+                <select class="blend-mode-select">
+                    <option value="normal">Normal</option>
+                    <option value="multiply">Multiply</option>
+                    <option value="screen">Screen</option>
+                    <option value="overlay">Overlay</option>
+                    <option value="darken">Darken</option>
+                    <option value="lighten">Lighten</option>
+                </select>
+            </div>
+        `;
+        
+        item.appendChild(handle);
+        item.appendChild(preview);
+        item.appendChild(info);
+        layerList.appendChild(item);
+        
+        // Add event listeners for layer controls
+        const opacitySlider = info.querySelector('.layer-opacity');
+        opacitySlider.addEventListener('input', (e) => {
+            layer.opacity = e.target.value / 100;
+            opacitySlider.title = `Opacity: ${Math.round(layer.opacity * 100)}%`;
+            applyPatternLayers();
         });
-    });
-    
-    // Color pickers
-    document.querySelectorAll('.layer-item-color').forEach(colorPicker => {
-        colorPicker.addEventListener('input', function() {
-            const layerItem = this.closest('.layer-item');
-            const index = parseInt(layerItem.dataset.index);
-            const face = window.patternSystem.selectedFace;
-            
-            window.patternSystem.activeLayers[face][index].color = this.value;
-        });
-    });
-    
-    // Blend mode selectors
-    document.querySelectorAll('.layer-item-blend').forEach(select => {
-        select.addEventListener('change', function() {
-            const layerItem = this.closest('.layer-item');
-            const index = parseInt(layerItem.dataset.index);
-            const face = window.patternSystem.selectedFace;
-            
-            window.patternSystem.activeLayers[face][index].blendMode = this.value;
-        });
-    });
-    
-    // Delete buttons
-    document.querySelectorAll('.layer-item-delete').forEach(button => {
-        button.addEventListener('click', function() {
-            const layerItem = this.closest('.layer-item');
-            const index = parseInt(layerItem.dataset.index);
-            const face = window.patternSystem.selectedFace;
-            
+        
+        const deleteBtn = info.querySelector('.remove-layer');
+        deleteBtn.addEventListener('click', () => {
             window.patternSystem.activeLayers[face].splice(index, 1);
             updateLayerList();
+            applyPatternLayers();
         });
     });
-    
-    // Implement drag-and-drop reordering
-    // This is a simple implementation - you might want to use a library for more complex needs
-    let draggedItem = null;
-    
-    document.querySelectorAll('.layer-item-move').forEach(handle => {
-        handle.addEventListener('mousedown', function(e) {
-            e.preventDefault();
-            draggedItem = this.closest('.layer-item');
-            draggedItem.classList.add('dragging');
-            
-            document.addEventListener('mousemove', handleDragMove);
-            document.addEventListener('mouseup', handleDragEnd);
-        });
-    });
-    
-    function handleDragMove(e) {
-        if (!draggedItem) return;
-        
-        const layerList = document.getElementById('layer-list');
-        const layerItems = layerList.querySelectorAll('.layer-item:not(.dragging)');
-        
-        // Find the item we're dragging over
-        let nextItem = null;
-        for (const item of layerItems) {
-            const rect = item.getBoundingClientRect();
-            const midY = rect.top + rect.height / 2;
-            
-            if (e.clientY < midY) {
-                nextItem = item;
-                break;
-            }
-        }
-        
-        // Reposition the dragged item
-        if (nextItem) {
-            layerList.insertBefore(draggedItem, nextItem);
-        } else {
-            layerList.appendChild(draggedItem);
-        }
-    }
-    
-    function handleDragEnd() {
-        if (!draggedItem) return;
-        
-        // Update the layers array
-        const face = window.patternSystem.selectedFace;
-        const newLayers = [];
-        
-        document.querySelectorAll('.layer-item').forEach(item => {
-            const oldIndex = parseInt(item.dataset.index);
-            newLayers.push(window.patternSystem.activeLayers[face][oldIndex]);
-        });
-        
-        window.patternSystem.activeLayers[face] = newLayers;
-        
-        // Clean up
-        draggedItem.classList.remove('dragging');
-        draggedItem = null;
-        
-        document.removeEventListener('mousemove', handleDragMove);
-        document.removeEventListener('mouseup', handleDragEnd);
-        
-        // Update the layer list
-        updateLayerList();
-    }
 }
 
 /**
- * Add pattern to the active layers
- * @param {string} patternId - ID of the pattern to add
+ * Set up event listeners for the pattern system
  */
-function addPatternLayer(patternId) {
-    const face = window.patternSystem.selectedFace;
-    const pattern = window.patternSystem.patternDatabase.patterns.find(p => p.id === patternId);
-    
-    if (!pattern) {
-        console.error(`Pattern not found: ${patternId}`);
-        return;
+function setupPatternEventListeners() {
+    // Face selector
+    const faceSelect = document.getElementById('pattern-face-select');
+    if (faceSelect) {
+        faceSelect.addEventListener('change', (e) => {
+            window.patternSystem.selectedFace = e.target.value;
+            updateLayerList();
+        });
     }
+
+    // Pattern search
+    const searchInput = document.getElementById('pattern-search-input');
+    const categorySelect = document.getElementById('pattern-category-select');
     
-    // Create a new layer with default settings
-    const newLayer = {
-        patternId: patternId,
-        opacity: 1,
-        color: pattern.defaultColor,
-        blendMode: pattern.recommendedBlendModes[0] || 'normal'
-    };
-    
-    // Add the layer to the top of the stack
-    window.patternSystem.activeLayers[face].unshift(newLayer);
-    
-    // Update the UI
-    updateLayerList();
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            populatePatternGrid(
+                categorySelect ? categorySelect.value : 'all',
+                searchInput.value.trim()
+            );
+        });
+    }
+
+    if (categorySelect) {
+        categorySelect.addEventListener('change', () => {
+            populatePatternGrid(
+                categorySelect.value,
+                searchInput ? searchInput.value.trim() : ''
+            );
+        });
+    }
+
+    // Layer action buttons
+    const applyBtn = document.getElementById('apply-layers-btn');
+    const clearBtn = document.getElementById('clear-layers-btn');
+
+    if (applyBtn) {
+        applyBtn.addEventListener('click', () => {
+            applyPatternLayers();
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            const face = window.patternSystem.selectedFace;
+            window.patternSystem.activeLayers[face] = [];
+            updateLayerList();
+            applyPatternLayers();
+        });
+    }
+
+    // Layer list drag and drop
+    const layerList = document.getElementById('layer-list');
+    if (layerList) {
+        new Sortable(layerList, {
+            animation: 150,
+            handle: '.layer-handle',
+            ghostClass: 'layer-item-ghost',
+            chosenClass: 'layer-item-chosen',
+            dragClass: 'layer-item-drag',
+            onEnd: () => {
+                // Update layer order based on DOM order
+                const face = window.patternSystem.selectedFace;
+                const layers = [];
+                layerList.querySelectorAll('.layer-item').forEach(item => {
+                    const layerId = item.getAttribute('data-layer-id');
+                    const existingLayer = window.patternSystem.activeLayers[face].find(l => l.id === layerId);
+                    if (existingLayer) {
+                        layers.push(existingLayer);
+                    }
+                });
+                window.patternSystem.activeLayers[face] = layers;
+                applyPatternLayers();
+            }
+        });
+    }
 }
 
 /**
@@ -830,7 +790,7 @@ function applyPatternLayers() {
     // Apply each layer from bottom to top (reversed from the UI display)
     for (let i = layers.length - 1; i >= 0; i--) {
         const layer = layers[i];
-        const pattern = window.patternSystem.patternDatabase.patterns.find(p => p.id === layer.patternId);
+        const pattern = window.patternSystem.patternDatabase[layer.patternId];
         
         if (!pattern) continue;
         

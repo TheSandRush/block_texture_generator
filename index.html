@@ -5,13 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Magic Block</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Pattern System Layout Adjustments */
+        .main-content {
+            display: grid;
+            grid-template-columns: 260px 1fr 260px;
+            gap: 1rem;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        #canvas-container {
+            grid-column: 2;
+            position: relative;
+            height: 100%;
+        }
+        
+        .controls-panel {
+            grid-column: 3;
+        }
+        
+        /* Ensure pattern sidebar is visible */
+        .pattern-sidebar {
+            grid-column: 1;
+            z-index: 100;
+        }
+    </style>
     <!-- Include Three.js, OrbitControls and SimplexNoise libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <!-- Include VXB converter and app scripts -->
     <script src="vxb-converter.js"></script>
+    <script src="pattern-database.js"></script>
+    <script src="pattern-layer-system.js"></script>
     <script src="script.js"></script>
 </head>
 <body>
@@ -319,20 +348,10 @@
     document.addEventListener('DOMContentLoaded', function() {
       console.log("DOM loaded, pattern database available:", typeof window.patternDatabase !== 'undefined');
       
-      // Load pattern layer system after a short delay
-      setTimeout(function() {
-        const scriptElement = document.createElement('script');
-        scriptElement.src = 'pattern-layer-system.js';
-        scriptElement.onload = function() {
-          console.log("Pattern layer system loaded");
-          
-          // Load main script after pattern system is loaded
-          const mainScript = document.createElement('script');
-          mainScript.src = 'script.js';
-          document.body.appendChild(mainScript);
-        };
-        document.body.appendChild(scriptElement);
-      }, 100); // 100ms delay
+      // Load main script after pattern system is loaded
+      const mainScript = document.createElement('script');
+      mainScript.src = 'script.js';
+      document.body.appendChild(mainScript);
     });
   </script>
 

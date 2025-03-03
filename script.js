@@ -672,9 +672,10 @@ function init() {
         initMathControls();
         
         // Initialize pattern layer system if available
-        if (window.patternLayerSystem && window.patternLayerSystem.init) {
-            window.patternLayerSystem.init();
-            console.log("Pattern Layer System initialized");
+        if (typeof initPatternLayerSystem === 'function') {
+            initPatternLayerSystem();
+        } else {
+            console.error('Pattern layer system not loaded properly');
         }
     } catch (error) {
         console.error("Initialization error:", error);
