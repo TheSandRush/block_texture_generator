@@ -169,7 +169,7 @@ function addPatternStyles() {
         /* Pattern Sidebar Styles */
         .pattern-sidebar {
             grid-column: 1;
-            width: 260px;
+            width: 350px;
             min-width: 260px;
             background-color: rgba(18, 18, 18, 0.95);
             padding: 1rem;
@@ -308,68 +308,60 @@ function addPatternStyles() {
         
         .layer-item {
             display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
-            padding: 0.5rem;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 0.75rem;
             background: rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(32, 196, 202, 0.3);
-            border-radius: 4px;
+            border-radius: 6px;
             margin-bottom: 0.5rem;
+            transition: all 0.2s ease;
+            width: 240px;
         }
-        
-        .layer-handle {
-            cursor: move;
-            padding: 4px;
-            border-radius: 4px;
-            transition: background-color 0.2s ease;
-        }
-        
-        .layer-handle:hover {
-            background-color: rgba(32, 196, 202, 0.2);
-        }
-        
-        .layer-handle svg {
-            display: block;
-        }
-        
-        .layer-preview {
-            width: 32px;
-            height: 32px;
-            flex-shrink: 0;
-            border-radius: 4px;
-            background-size: cover;
-            background-position: center;
-            border: 1px solid rgba(32, 196, 202, 0.3);
-        }
-        
-        .layer-info {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
+
         .layer-header {
             display: flex;
             align-items: center;
-            justify-content: space-between;
             gap: 0.5rem;
         }
-        
+
+        .layer-handle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: move;
+            width: 16px;
+            height: 24px;
+            color: rgba(32, 196, 202, 0.7);
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .layer-preview {
+            width: 24px;
+            height: 24px;
+            border-radius: 3px;
+            background-size: cover;
+            background-position: center;
+            border: 1px solid rgba(32, 196, 202, 0.3);
+            flex-shrink: 0;
+        }
+
         .layer-name {
-            font-size: 12px;
+            font-size: 0.875rem;
             color: white;
+            font-weight: 500;
+            flex: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            min-width: 0;
         }
-        
+
         .remove-layer {
-            flex-shrink: 0;
-            width: 20px;
-            height: 20px;
-            padding: 3px;
+            width: 24px;
+            height: 24px;
+            padding: 4px;
             border: none;
             background: transparent;
             color: rgba(255, 255, 255, 0.5);
@@ -379,27 +371,45 @@ function addPatternStyles() {
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
-        
-        .remove-layer:hover {
-            background: rgba(255, 0, 0, 0.2);
-            color: rgba(255, 0, 0, 0.8);
-        }
-        
+
         .layer-controls {
             display: flex;
-            align-items: center;
-            gap: 8px;
+            flex-direction: column;
+            gap: 0.5rem;
         }
-        
+
+        .control-group {
+            display: grid;
+            grid-template-columns: 50px 1fr;
+            align-items: center;
+            gap: 0.5rem;
+            height: 24px;
+        }
+
+        .control-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-align: right;
+        }
+
+        .control-input {
+            position: relative;
+            height: 24px;
+            display: flex;
+            align-items: center;
+        }
+
         .layer-opacity {
-            flex: 1;
+            width: 100%;
             height: 4px;
             -webkit-appearance: none;
-            background: rgba(32, 196, 202, 0.3);
+            background: rgba(32, 196, 202, 0.2);
             border-radius: 2px;
+            outline: none;
         }
-        
+
         .layer-opacity::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 12px;
@@ -407,29 +417,98 @@ function addPatternStyles() {
             border-radius: 50%;
             background: rgb(32, 196, 202);
             cursor: pointer;
+            border: 2px solid rgba(0, 0, 0, 0.3);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
-        
+
         .blend-mode-select {
-            padding: 2px 4px;
-            font-size: 11px;
+            width: 100%;
+            height: 50px;
+            padding: 0 0.5rem;
+            font-size: 0.75rem;
             background: rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(32, 196, 202, 0.3);
             border-radius: 3px;
             color: white;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='rgba(32, 196, 202, 0.7)' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            padding-right: 1.5rem;
+        }
+
+        .blend-mode-select:hover {
+            border-color: rgba(32, 196, 202, 0.5);
+        }
+
+        .blend-mode-select:focus {
+            border-color: rgb(32, 196, 202);
+            outline: none;
+        }
+        
+        .layer-actions {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(32, 196, 202, 0.3);
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+        
+        .layer-actions button {
+            flex: 1;
+            padding: 0.625rem 1rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        #apply-layers-btn {
+            background: rgb(32, 196, 202);
+            color: black;
+        }
+        
+        #apply-layers-btn:hover {
+            background: rgb(42, 216, 222);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(32, 196, 202, 0.4);
+        }
+        
+        #clear-layers-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgb(32, 196, 202);
+            border: 1px solid rgba(32, 196, 202, 0.3);
+        }
+        
+        #clear-layers-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgb(32, 196, 202);
         }
         
         /* Layer drag states */
         .layer-item-ghost {
             opacity: 0.5;
             background: rgba(32, 196, 202, 0.1);
+            transform: scale(0.98);
         }
         
         .layer-item-chosen {
-            background: rgba(32, 196, 202, 0.2);
+            background: rgba(32, 196, 202, 0.15);
+            border-color: rgb(32, 196, 202);
+            transform: scale(1.02);
         }
         
         .layer-item-drag {
-            opacity: 0.8;
+            opacity: 0.9;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         
         /* Loading and Error States */
@@ -600,86 +679,136 @@ function addPatternLayer(patternId) {
 function updateLayerList() {
     const layerList = document.getElementById('layer-list');
     if (!layerList) return;
-    
+
     const face = window.patternSystem.selectedFace;
     const layers = window.patternSystem.activeLayers[face];
-    
+
     layerList.innerHTML = '';
-    
+
     layers.forEach((layer, index) => {
-        const item = document.createElement('div');
-        item.className = 'layer-item';
-        item.setAttribute('data-layer-id', layer.id);
-        
+        const layerItem = document.createElement('div');
+        layerItem.className = 'layer-item';
+        layerItem.setAttribute('data-layer-id', layer.id);
+
+        // Header section
+        const header = document.createElement('div');
+        header.className = 'layer-header';
+
         const handle = document.createElement('div');
         handle.className = 'layer-handle';
-        handle.innerHTML = `
-            <svg width="12" height="12" viewBox="0 0 12 12">
-                <circle cx="3" cy="3" r="1.5" fill="rgba(32, 196, 202, 0.5)"/>
-                <circle cx="9" cy="3" r="1.5" fill="rgba(32, 196, 202, 0.5)"/>
-                <circle cx="3" cy="9" r="1.5" fill="rgba(32, 196, 202, 0.5)"/>
-                <circle cx="9" cy="9" r="1.5" fill="rgba(32, 196, 202, 0.5)"/>
-            </svg>
-        `;
-        
+        handle.innerHTML = '⋮⋮';
+
         const preview = document.createElement('div');
         preview.className = 'layer-preview';
-        
-        const pattern = window.patternSystem.patternDatabase[layer.patternId];
-        if (pattern && pattern.src) {
-            const img = new Image();
-            img.onload = () => preview.style.backgroundImage = `url(${img.src})`;
-            img.onerror = () => {
-                preview.style.backgroundImage = `url(${createPlaceholderCanvas()})`;
-            };
-            img.src = pattern.src.startsWith('http') ? pattern.src : `patterns/${pattern.src}`;
-        } else {
-            preview.style.backgroundImage = `url(${createPlaceholderCanvas()})`;
+        if (window.patternSystem.patternDatabase[layer.patternId]?.src) {
+            preview.style.backgroundImage = `url(${window.patternSystem.patternDatabase[layer.patternId].src})`;
         }
+
+        const name = document.createElement('div');
+        name.className = 'layer-name';
+        name.textContent = layer.name;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-layer';
+        removeBtn.innerHTML = '×';
+        removeBtn.title = 'Remove Layer';
+
+        header.appendChild(handle);
+        header.appendChild(preview);
+        header.appendChild(name);
+        header.appendChild(removeBtn);
+
+        // Controls section
+        const controls = document.createElement('div');
+        controls.className = 'layer-controls';
+
+        // Opacity control
+        const opacityGroup = document.createElement('div');
+        opacityGroup.className = 'control-group';
+
+        const opacityLabel = document.createElement('div');
+        opacityLabel.className = 'control-label';
+        opacityLabel.textContent = 'Opacity';
+
+        const opacityInput = document.createElement('div');
+        opacityInput.className = 'control-input';
+
+        const opacitySlider = document.createElement('input');
+        opacitySlider.type = 'range';
+        opacitySlider.className = 'layer-opacity';
+        opacitySlider.min = '0';
+        opacitySlider.max = '1';
+        opacitySlider.step = '0.01';
+        opacitySlider.value = layer.opacity;
+
+        opacityInput.appendChild(opacitySlider);
+        opacityGroup.appendChild(opacityLabel);
+        opacityGroup.appendChild(opacityInput);
+
+        // Blend mode control
+        const blendGroup = document.createElement('div');
+        blendGroup.className = 'control-group';
+
+        const blendLabel = document.createElement('div');
+        blendLabel.className = 'control-label';
+        blendLabel.textContent = 'Blend';
+
+        const blendInput = document.createElement('div');
+        blendInput.className = 'control-input';
+
+        const blendSelect = document.createElement('select');
+        blendSelect.className = 'blend-mode-select';
         
-        const info = document.createElement('div');
-        info.className = 'layer-info';
-        info.innerHTML = `
-            <div class="layer-header">
-                <span class="layer-name">${layer.name}</span>
-                <button class="remove-layer" title="Remove Layer">
-                    <svg width="14" height="14" viewBox="0 0 14 14">
-                        <line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        <line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="layer-controls">
-                <input type="range" class="layer-opacity" value="${layer.opacity * 100}" min="0" max="100"
-                    title="Opacity: ${Math.round(layer.opacity * 100)}%">
-                <select class="blend-mode-select">
-                    <option value="normal">Normal</option>
-                    <option value="multiply">Multiply</option>
-                    <option value="screen">Screen</option>
-                    <option value="overlay">Overlay</option>
-                    <option value="darken">Darken</option>
-                    <option value="lighten">Lighten</option>
-                </select>
-            </div>
-        `;
-        
-        item.appendChild(handle);
-        item.appendChild(preview);
-        item.appendChild(info);
-        layerList.appendChild(item);
-        
-        // Add event listeners for layer controls
-        const opacitySlider = info.querySelector('.layer-opacity');
-        opacitySlider.addEventListener('input', (e) => {
-            layer.opacity = e.target.value / 100;
-            opacitySlider.title = `Opacity: ${Math.round(layer.opacity * 100)}%`;
-            applyPatternLayers();
+        const blendModes = [
+            'normal',
+            'multiply',
+            'screen',
+            'overlay',
+            'darken',
+            'lighten',
+            'color-dodge',
+            'color-burn',
+            'hard-light',
+            'soft-light',
+            'difference',
+            'exclusion'
+        ];
+
+        blendModes.forEach(mode => {
+            const option = document.createElement('option');
+            option.value = mode;
+            option.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+            if (mode === layer.blendMode) {
+                option.selected = true;
+            }
+            blendSelect.appendChild(option);
         });
-        
-        const deleteBtn = info.querySelector('.remove-layer');
-        deleteBtn.addEventListener('click', () => {
+
+        blendInput.appendChild(blendSelect);
+        blendGroup.appendChild(blendLabel);
+        blendGroup.appendChild(blendInput);
+
+        controls.appendChild(opacityGroup);
+        controls.appendChild(blendGroup);
+
+        layerItem.appendChild(header);
+        layerItem.appendChild(controls);
+        layerList.appendChild(layerItem);
+
+        // Event listeners
+        removeBtn.addEventListener('click', () => {
             window.patternSystem.activeLayers[face].splice(index, 1);
             updateLayerList();
+            applyPatternLayers();
+        });
+
+        opacitySlider.addEventListener('input', (e) => {
+            layer.opacity = parseFloat(e.target.value);
+            applyPatternLayers();
+        });
+
+        blendSelect.addEventListener('change', (e) => {
+            layer.blendMode = e.target.value;
             applyPatternLayers();
         });
     });
