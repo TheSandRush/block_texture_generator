@@ -304,18 +304,37 @@
             </div>
         </div>
         <div class="export-info">
-            <p>VXB format can be used in compatible voxel applications and editors.</p>
+            <p>VXB File can be loaded in The Sandbox VoxEdit as Block.</p>
         </div>
-    </div>
-</div>
+   </div>
+  </div>
 
-<script src="vxb-converter.js"></script>
-<script src="vxb-converter-setup.js"></script>
+  <script src="vxb-converter.js"></script>
+  <script src="vxb-converter-setup.js"></script>
 
-<!-- Pattern system scripts -->
-<script src="pattern-database.js"></script>
-<script src="pattern-layer-system.js"></script>
-<script src="script.js"></script>
+  <!-- Pattern system scripts with controlled loading -->
+  <script src="pattern-database.js"></script>
+  <script>
+    // Add small delay to ensure pattern-database.js is fully loaded and processed
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log("DOM loaded, pattern database available:", typeof window.patternDatabase !== 'undefined');
+      
+      // Load pattern layer system after a short delay
+      setTimeout(function() {
+        const scriptElement = document.createElement('script');
+        scriptElement.src = 'pattern-layer-system.js';
+        scriptElement.onload = function() {
+          console.log("Pattern layer system loaded");
+          
+          // Load main script after pattern system is loaded
+          const mainScript = document.createElement('script');
+          mainScript.src = 'script.js';
+          document.body.appendChild(mainScript);
+        };
+        document.body.appendChild(scriptElement);
+      }, 100); // 100ms delay
+    });
+  </script>
 
 </body>
 </html>
