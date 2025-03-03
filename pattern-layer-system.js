@@ -1,3 +1,10 @@
+// Add this at the top of pattern-layer-system.js
+// Avoid conflicts with existing variables
+if (typeof window.patternSystemInitialized === 'undefined') {
+    window.patternSystemInitialized = false;
+    // Any variables that might conflict should be namespaced
+    // For example, if you have a presets variable, rename it to patternPresets
+}
 // pattern-layer-system.js - Add this file to your project
 
 /**
@@ -5,11 +12,6 @@
  * This module adds a pattern layer selector and application system
  * that integrates with the existing texture generation pipeline.
  */
-
-// At the beginning of pattern-layer-system.js, add:
-if (typeof window.patternSystemPresets === 'undefined') {
-    window.patternSystemPresets = {}; // Use a different variable name
-}
 
 // Global state for the pattern system
 window.patternSystem = {
