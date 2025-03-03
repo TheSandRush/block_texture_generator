@@ -2222,34 +2222,29 @@ const patternDatabase = {
   defaultColor: "#9932CC",
   recommendedBlendModes: ["normal", "screen", "overlay"]
 }
-
-// Add these helper functions to the end of your pattern-database.js file
-
-  // Helper function to get patterns by category
+  ],  // <-- This is where your patterns array ends
+  
+  // Helper functions defined as object methods
   getPatternsByCategory: function(category) {
     return this.patterns.filter(pattern => pattern.category === category);
   },
   
-  // Helper function to search patterns by tags
   searchPatternsByTags: function(tags) {
     return this.patterns.filter(pattern => 
       tags.some(tag => pattern.tags.includes(tag))
     );
   },
   
-  // Helper function to get a pattern by ID
   getPatternById: function(id) {
     return this.patterns.find(pattern => pattern.id === id);
   },
   
-  // Get all available categories
   getCategories: function() {
     const categories = new Set();
     this.patterns.forEach(pattern => categories.add(pattern.category));
     return Array.from(categories);
   },
   
-  // Get all available tags
   getAllTags: function() {
     const tags = new Set();
     this.patterns.forEach(pattern => {
@@ -2258,12 +2253,11 @@ const patternDatabase = {
     return Array.from(tags).sort();
   },
   
-  // Get random patterns
   getRandomPatterns: function(count = 5) {
     const shuffled = [...this.patterns].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
   }
-};
+}; // <-- This closes the patternDatabase object
 
 // Export for use in browser
 window.patternDatabase = patternDatabase;
