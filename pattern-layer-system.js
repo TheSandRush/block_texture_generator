@@ -89,6 +89,9 @@ async function loadPatternDatabase() {
  * Create the pattern sidebar UI
  */
 function createPatternSidebar() {
+    // Add debugging statements right at the beginning of this function
+    console.log("Creating pattern sidebar...");
+    console.log("Pattern database loaded:", window.patternSystem.patternDatabase);
     // Create the sidebar container
     const patternSidebar = document.createElement('div');
     patternSidebar.className = 'pattern-sidebar';
